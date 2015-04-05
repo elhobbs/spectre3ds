@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{906cd89d-b0f0-4ba3-9bb2-56a624efbd6d}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\general">
+      <UniqueIdentifier>{c5409ac7-fbe5-49e3-b937-2cc10f3e4fbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\csource">
+      <UniqueIdentifier>{29b31270-6187-4867-8898-b496d73c39e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{dcd113c7-56c1-4f00-b006-7acc4a6ad519}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\mp3dec.c">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\mp3tabs.c">
+      <Filter>Source Files\general</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\bitstream.c">
+      <Filter>Source Files\csource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\buffers.c">
+      <Filter>Source Files\csource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dequant.c">
+      <Filter>Source Files\csource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\huffman.c">
+      <Filter>Source Files\csource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\imdct.c">
+      <Filter>Source Files\csource</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\subband.c">
+      <Filter>Source Files\csource</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

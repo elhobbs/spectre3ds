@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{cb341079-e21a-47a1-be45-5b68ee5425c4}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\cppwrapper">
+      <UniqueIdentifier>{d713484c-9334-4d59-8a7a-675c00e915ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cwrapper">
+      <UniqueIdentifier>{0b79bab7-bea5-4dbc-ba19-cf8317807749}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{be5a4121-cec3-456b-a15b-40ec6719db10}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{b9eb4cc8-6a9b-4039-ad1c-64d8dfe9fad4}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\mpadecobj.cpp">
+      <Filter>Source Files\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\testwrap\winmain.cpp">
+      <Filter>Source Files\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\testwrap\main.c">
+      <Filter>Source Files\cwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\testwrap\debug.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\testwrap\timing.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

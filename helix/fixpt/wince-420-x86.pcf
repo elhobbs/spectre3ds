@@ -1,0 +1,2 @@
+
+project.AddDefines('WINCE_EMULATOR')
