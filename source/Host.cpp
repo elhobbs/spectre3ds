@@ -8,6 +8,7 @@
 #include "timer3DS.h"
 #include <sys/dirent.h>
 #include <string.h>
+#include "ed_parser.h"
 
 unsigned char *q1_palette;
 extern cache textureCache;
@@ -377,7 +378,7 @@ void Host::choose_game_draw(char *dirlist[], int total, int pos)
 	{
 		// Set row
 		iprintf("\x1b[%d;0H", i - start + 3);
-		iprintf(" more...", dirlist[i]);
+		iprintf(" more...");
 	}
 	gfxFlushBuffers();
 	gfxSwapBuffers();
@@ -576,6 +577,77 @@ bool Host::init() {
 	return false;
 }
 
+void Host::game_save(char *cmdline, void *p, ...) {
+	cmdArgs cmd(cmdline);
+
+	if (cmd.argc != 2) {
+		printf("save <savename> : save a game\n");
+		return;
+	}
+
+	if (!m_sv.is_active()) {
+		printf("Not playing a local game.\n");
+		return;
+	}
+
+	printf("saving game to %s\n", cmd.argv[1]);
+	FILE *fp = sys.fileSystem.create(cmd.argv[1]);
+	if (!fp) {
+		printf("failed to create file: %s\n", cmd.argv[1]);
+		return;
+	}
+
+	m_sv.save_game(fp);
+
+	fclose(fp);
+
+	printf("complete.\n");
+}
+
+void Host::game_load(char *cmdline, void *p, ...) {
+	cmdArgs cmd(cmdline);
+	
+	if (cmd.argc != 2)
+	{
+		printf("load <savename> : load a game\n");
+		return;
+	}
+
+	::printf("opening save file %s...\n", cmd.argv[1]);
+	sysFile *fp = sys.fileSystem.open(cmd.argv[1]);
+	if (!fp) {
+		printf("ERROR: couldn't open %s\n", cmd.argv[1]);
+		return;
+	}
+	int len = fp->length();
+	char *data = new char[len+1];
+	if (!data) {
+		printf("ERROR: failed to allocate buffer\n");
+		delete fp;
+		return;
+	}
+	::printf("reading save data %d\n", len);
+	fp->read(data, 0, len);
+	data[len] = 0;
+
+	::printf("disconnecting client...\n");
+	m_cl.disconnect();
+
+	::printf("parsing save data...\n");
+	ed_parser parser;
+	parser.load_save(m_sv, data);
+
+	delete[] data;
+	delete fp;
+
+	::printf("connecting...\n");
+	if (m_cl.get_state() != ca_dedicated)
+	{
+		m_cl.establish_connection("local");
+		m_cl.reconnect();
+	}
+	::printf("done\n");
+}
 
 int Console::handleEvent(event_t ev) {
 	int dir = 1;

@@ -768,3 +768,146 @@ Done:
 
 	return (eval_t *)((char *)&ed->v + def->ofs * 4);
 }
+
+ddef_t *q1Progs::ED_FieldAtOfs(int ofs)
+{
+	ddef_t		*def;
+	int			i;
+
+	for (i = 0; i<m_programs.numfielddefs; i++)
+	{
+		def = &m_fielddefs[i];
+		if (def->ofs == ofs)
+			return def;
+	}
+	return 0;
+}
+
+ddef_t *q1Progs::ED_FindGlobal(char *name) {
+	ddef_t		*def;
+	int			i;
+
+	for (i = 0; i<m_programs.numglobaldefs; i++)
+	{
+		def = &m_globaldefs[i];
+		if (!strcmp(m_strings + def->s_name, name))
+			return def;
+	}
+	return 0;
+}
+
+char *q1Progs::valueString(int type, eval_t *val) {
+	static char	line[256];
+	ddef_t		*def;
+	dfunction_t	*f;
+	
+	type &= ~DEF_SAVEGLOBAL;
+
+	switch (type)
+	{
+	case ev_string:
+		sprintf(line, "%s", m_strings + val->string);
+		break;
+	case ev_entity:
+		sprintf(line, "%i", NUM_FOR_EDICT(prog_to_edict(val->edict)));
+		break;
+	case ev_function:
+		f = m_functions + val->function;
+		sprintf(line, "%s", m_strings + f->s_name);
+		break;
+	case ev_field:
+		def = ED_FieldAtOfs(val->_int);
+		sprintf(line, "%s", m_strings + def->s_name);
+		break;
+	case ev_void:
+		sprintf(line, "void");
+		break;
+	case ev_float:
+		sprintf(line, "%f", val->_float);
+		break;
+	case ev_vector:
+		sprintf(line, "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
+		break;
+	default:
+		sprintf(line, "bad type %i", type);
+		break;
+	}
+
+	return line;
+}
+
+void q1Progs::ED_WriteGlobals(FILE *f)
+{
+	ddef_t		*def;
+	int			i;
+	char		*name;
+	int			type;
+	int len;
+
+	fprintf(f, "{\n");
+	for (i = 0; i<m_programs.numglobaldefs; i++)
+	{
+		def = &m_globaldefs[i];
+		type = def->type;
+		if (!(def->type & DEF_SAVEGLOBAL))
+			continue;
+		type &= ~DEF_SAVEGLOBAL;
+
+		if (type != ev_string
+			&& type != ev_float
+			&& type != ev_entity)
+			continue;
+
+		name = m_strings + def->s_name;
+		fprintf(f, "\"%s\" ", name);
+		fprintf(f, "\"%s\"\n", valueString(type, (eval_t *)&m_globals[def->ofs]));
+	}
+	fprintf(f, "}\n");
+}
+
+static int type_size[8] = { 1, sizeof(string_t) / 4, 1, 3, 1, 1, sizeof(func_t) / 4, sizeof(void *) / 4 };
+void q1Progs::ED_Write(FILE *f, edict_t *ed)
+{
+	ddef_t	*d;
+	int		*v;
+	int		i, j;
+	char	*name;
+	int		type;
+
+	fprintf(f, "{\n");
+
+	if (ed->free)
+	{
+		fprintf(f, "}\n");
+		return;
+	}
+
+	for (i = 1; i<m_programs.numfielddefs; i++)
+	{
+		d = &m_fielddefs[i];
+		name = m_strings + d->s_name;
+		if (name[strlen(name) - 2] == '_')
+			continue;	// skip _x, _y, _z vars
+
+		v = (int *)((char *)&ed->v + d->ofs * 4);
+
+		// if the value is still all 0, skip the field
+		type = d->type & ~DEF_SAVEGLOBAL;
+		for (j = 0; j<type_size[type]; j++)
+			if (v[j])
+				break;
+		if (j == type_size[type])
+			continue;
+
+		fprintf(f, "\"%s\" ", name);
+		fprintf(f, "\"%s\"\n", valueString(d->type, (eval_t *)v));
+	}
+
+	fprintf(f, "}\n");
+}
+
+void q1Progs::ED_Write(FILE *f) {
+	for (int i = 0; i < m_num_edicts; i++) {
+		ED_Write(f, EDICT_NUM(i));
+	}
+}

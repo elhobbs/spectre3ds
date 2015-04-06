@@ -424,18 +424,35 @@ int FileSystem::dir(char*partial, int maxnum, char **list) {
 	return found;
 }
 
-sysFile* FileSystem::open( char *name ) {
+sysFile* FileSystem::open(char *name) {
 
 	int cnt = m_paths_cnt;
-	while(cnt-- > 0) {
+	while (cnt-- > 0) {
 		sysFileDir *path = m_paths[cnt];
 		sysFile* file = path->open(name);
-		if(file) {
+		if (file) {
 			return file;
 		}
 	}
 
 	return 0;
+}
+
+FILE* FileSystem::create(char *name) {
+	char base[1024];
+	int cnt = m_paths_cnt;
+	//default to current directory
+	*base = 0;
+	//try to find a directory (rather than a pak or wad)
+	while (cnt-- > 0) {
+		sysFileDir *path = m_paths[cnt];
+		if (path->is_dir()) {
+			path->name(base);
+			break;
+		}
+	}
+	strcat(base, name);
+	return fopen(base, "wb");
 }
 
 void* FileSystem::Get(FileSystemStat &stat) {

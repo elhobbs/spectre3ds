@@ -122,6 +122,8 @@ public:
 	void*	Get(int idx);
 	void	FreeData(int idx);
 	int		dir(char *partial, int startnum, int maxnum, char **list);
+	bool	is_dir();
+	void	name(char *name);
 
 	sysFile*	open(char *name);
 
@@ -149,6 +151,16 @@ inline sysFileDir::sysFileDir( void ) {
 	m_max_filename_length = 0;
 }
 
+inline bool sysFileDir::is_dir(void) {
+	return m_isdir;
+}
+
+inline void sysFileDir::name(char *name) {
+	if (name) {
+		strcpy(name, m_path);
+	}
+}
+
 class FileSystem {
 public:
 	FileSystem();
@@ -158,7 +170,8 @@ public:
 	FileSystemStat operator[]( char *name );
 	void* Get(FileSystemStat &stat);
 
-	sysFile* open(char *name);
+	sysFile*	open(char *name);
+	FILE*		create(char *name);
 
 	int dir(char*partial, int maxnum, char **list);
 

@@ -587,8 +587,8 @@ void ViewState::render(float *origin, float *angles) {
 	glPopMatrix();
 #endif
 
-	//con_printf(20, 15, "o: %4.2f %4.2f %4.2f       ", origin[0], origin[1], origin[2]);
-	//con_printf(20, 16, "a: %3.2f %3.2f %3.2f       ", angles[0], angles[1], angles[2]);
+	//host.printf("o: %4.2f %4.2f %4.2f\n", origin[0], origin[1], origin[2]);
+	//host.printf("a: %3.2f %3.2f %3.2f\n", angles[0], angles[1], angles[2]);
 
 #if 1
 	//draw world

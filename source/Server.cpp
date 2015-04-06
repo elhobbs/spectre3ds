@@ -1118,6 +1118,14 @@ void Server::client_think(Client *client)
 void Server::broadcast_printf(char *str, ...) {
 }
 
+void Server::pause(bool on) {
+	m_paused = on;
+}
+
+void Server::loadgame(bool on) {
+	m_loadgame = on;
+}
+
 void Server::pause() {
 	m_paused ^= 1;
 	if (m_paused)
@@ -1651,6 +1659,8 @@ void Server::spawn_server(char *server) {
 	vbo_ls = 0;
 	mdl_cb = 0;
 	mdl_tx = 0;
+	//m_loadgame is used to flag loading a savegame - rename?
+	m_loadgame = false;
 	host.clear();
 	host.dprintf("free mem : %dKB LINEAR, %dKB REGULAR\n", (int)linearSpaceFree() / 1024, (int)getMemFree() / 1024);
 	

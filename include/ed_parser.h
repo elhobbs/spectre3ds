@@ -10,6 +10,7 @@
 class ed_parser {
 public:
 	int load(q1Progs *progs,char *data);
+	int load_save(Server &server, char *data);
 private:
 	int line;
 	int position;
@@ -21,12 +22,14 @@ private:
 	void skip_white_space();
 	char* parse_string();
 	float parse_float();
-
 	bool parse_vec3(float p[3]);
-	bool parse_ed(int entnum);
-	void parse();
+
+	bool parse_ed(int entnum, bool allocate);
+	void parse(bool allocate = true);
+
+	bool parse_globaldefs();
 
 	q1Progs *m_progs;
-
+	Server	*m_server;
 };
 

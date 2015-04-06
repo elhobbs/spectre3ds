@@ -89,6 +89,8 @@ private:
 	void pause(char *cmdline, void *p, ...);
 	void music(char *cmdline, void *p, ...);
 	void bind(char *cmdline, void *p, ...);
+	void game_load(char *cmdline, void *p, ...);
+	void game_save(char *cmdline, void *p, ...);
 
 	CmdList<Host>			m_cmds;
 	CmdBufferFixed<8192>	m_cmd_text;
@@ -130,6 +132,8 @@ inline Host::Host():m_cmds(this) {
 	m_cmds.add("pause", &Host::pause);
 	m_cmds.add("music", &Host::music);
 	m_cmds.add("bind", &Host::bind);
+	m_cmds.add("load", &Host::game_load);
+	m_cmds.add("save", &Host::game_save);
 }
 
 inline bool Host::console_visible() {

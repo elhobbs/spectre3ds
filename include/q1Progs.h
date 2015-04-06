@@ -69,6 +69,13 @@ public:
 		bool ED_ParseEpair(void *base, ddef_t *key, char *s);
 		eval_t *GetEdictFieldValue(edict_t *ed, char *field);
 
+		char* valueString(int type, eval_t *val);
+		ddef_t *ED_FieldAtOfs(int ofs);
+		void ED_WriteGlobals(FILE *f);
+		void ED_Write(FILE *f, edict_t *ed);
+		void ED_Write(FILE *f);
+		ddef_t *ED_FindGlobal(char *name);
+
 
 
 		char *PF_VarString(int	first);

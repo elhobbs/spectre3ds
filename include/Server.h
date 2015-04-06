@@ -62,8 +62,12 @@ public:
 	bool init();
 	void frame(float frametime);
 
+	void		save_game(FILE *fp);
+
 	void		pause();
-	void		broadcast_printf(char *str,...);
+	void		pause(bool on);
+	void		loadgame(bool on);
+	void		broadcast_printf(char *str, ...);
 
 	void		clear_datagram();
 	void		check_for_new_clients();
@@ -174,6 +178,7 @@ public:
 
 	bool		set_active(bool val);
 	double		time();
+	void		time(float time);
 	NetBuffer	*datagram();
 	NetBuffer	*reliable_datagram();
 	NetBuffer	*signon();
@@ -286,6 +291,10 @@ inline int Server::maxclients() {
 
 inline double Server::time() {
 	return m_time;
+}
+
+inline void Server::time(float time) {
+	m_time = time;
 }
 
 inline bool Server::is_active() {

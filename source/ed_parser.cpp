@@ -1,6 +1,7 @@
 #include "ed_parser.h"
 #include "cvar.h"
 #include "stdio.h"
+#include "Server.h"
 
 extern cvar_t	skill;
 extern cvar_t	deathmatch;
@@ -204,7 +205,7 @@ bool ed_parser::check(char *token, int len) {
 	return false;
 }
 
-bool ed_parser::parse_ed(int entnum) {
+bool ed_parser::parse_ed(int entnum, bool allocate) {
 	int pos = position;
 	if (!check("{", 1)) {
 		return false;
@@ -213,49 +214,64 @@ bool ed_parser::parse_ed(int entnum) {
 	edict_t		*ent;
 	if (!entnum) {
 		ent = m_progs->EDICT_NUM(0);
-	} else {
-		ent = m_progs->ED_Alloc();
+	}
+	else if (!allocate) {
+		while (entnum >= m_progs->m_num_edicts) {
+			m_progs->ED_Alloc();
+		}
+		ent = m_progs->EDICT_NUM(entnum);
+		ent->free = false;
 		memset(&ent->v, 0, m_progs->m_programs.entityfields * 4);
+	}
+	else {
+		ent = m_progs->ED_Alloc();
 	}
 
 	do {
 		//check for end
 		if (check("}", 1)) {
-			// remove things from different skill levels or deathmatch
-			if (deathmatch.value)
-			{
-				if (((int)ent->v.spawnflags & SPAWNFLAG_NOT_DEATHMATCH))
+			if (allocate) {
+				// remove things from different skill levels or deathmatch
+				if (deathmatch.value)
+				{
+					if (((int)ent->v.spawnflags & SPAWNFLAG_NOT_DEATHMATCH))
+					{
+						m_progs->ED_Free(ent);
+						return true;
+					}
+				}
+				else if ((skill.value == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY))
+					|| (skill.value == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
+					|| (skill.value >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)))
 				{
 					m_progs->ED_Free(ent);
 					return true;
 				}
-			}
-			else if ((skill.value == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY))
-				|| (skill.value == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
-				|| (skill.value >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)))
-			{
-				m_progs->ED_Free(ent);
-				return true;
-			}
-			if (!ent->v.classname)
-			{
-				printf("No classname for:\n");
-				//ED_Print(ent);
-				m_progs->ED_Free(ent);
-				return true;
-			}
-			// look for the spawn function
-			dfunction_t *func = m_progs->ED_FindFunction(m_progs->m_strings + ent->v.classname);
-			if (!func)
-			{
-				printf("No spawn function for:\n");
-				//ED_Print(ent);
-				m_progs->ED_Free(ent);
-				return true;
-			}
+				if (!ent->v.classname)
+				{
+					printf("No classname for:\n");
+					//ED_Print(ent);
+					m_progs->ED_Free(ent);
+					return true;
+				}
+				// look for the spawn function
+				dfunction_t *func = m_progs->ED_FindFunction(m_progs->m_strings + ent->v.classname);
+				if (!func)
+				{
+					printf("No spawn function for:\n");
+					//ED_Print(ent);
+					m_progs->ED_Free(ent);
+					return true;
+				}
 
-			m_progs->m_global_struct->self = m_progs->edict_to_prog(ent);
-			m_progs->program_execute(func - m_progs->m_functions);
+				m_progs->m_global_struct->self = m_progs->edict_to_prog(ent);
+				m_progs->program_execute(func - m_progs->m_functions);
+			}
+			else {
+				if (!ent->free) {
+					m_server->link_edict(ent, false);
+				}
+			}
 
 			return true;
 		}
@@ -298,20 +314,107 @@ bool ed_parser::parse_ed(int entnum) {
 	return false;
 }
 
-void ed_parser::parse() {
+void ed_parser::parse(bool allocate) {
 
 	line = 1;
 	int entnum = 0;
-	while (parse_ed(entnum++));
+	while (parse_ed(entnum++,allocate));
 }
 
-int ed_parser::load(q1Progs *progs,char *data) {
+int ed_parser::load(q1Progs *progs, char *data) {
 	m_progs = progs;
 	length = strlen(data);
 	buffer = data;
 	position = 0;
 
 	parse();
+
+	return 0;
+}
+
+bool ed_parser::parse_globaldefs() {
+	int pos = position;
+	if (!check("{", 1)) {
+		return false;
+	}
+	do {
+		//check for end
+		if (check("}", 1)) {
+			return true;
+		}
+		//look for key pairs
+		char keyname[1024];
+		char valstr[1024];
+		strcpy(keyname, parse_string());
+		strcpy(valstr, parse_string());
+		ddef_t	*key = m_progs->ED_FindGlobal(keyname);
+		if (!key)
+		{
+			printf("'%s' is not a global\n", keyname);
+			continue;
+		}
+
+		if (!m_progs->ED_ParseEpair((void *)m_progs->m_globals, key, valstr)) {
+			sys.error("ED_ParseGlobals: parse error");
+		}
+
+	} while (position < length);
+
+	return false;
+}
+
+int ed_parser::load_save(Server &server, char *data){
+	m_progs = server.m_progs;
+	m_server = &server;
+	length = strlen(data);
+	buffer = data;
+	position = 0;
+
+	float version = parse_float();
+	if (version != 5) {
+		return -1;
+	}
+
+	char *comment = parse_string();
+	float spawn_parms[NUM_SPAWN_PARMS];
+	for (int i = 0; i < NUM_SPAWN_PARMS; i++) {
+		spawn_parms[i] = parse_float();
+	}
+	float skill = parse_float();
+	int current_skill = (int)(skill + 0.1);
+	Cvar_SetValue("skill", (float)current_skill);
+
+	char mapname[128];
+	strcpy(mapname, parse_string());
+	float time = parse_float();
+
+	server.spawn_server(mapname);
+
+	if (!server.is_active()) {
+		printf("Couldn't load map: %s\n", mapname);
+		return -1;
+	}
+
+	server.pause(true);
+	server.loadgame(true);
+
+	for (int i = 0; i<MAX_LIGHTSTYLES; i++) {
+		char *str = parse_string();
+		server.m_progs->m_lightstyles[i] = new(pool) char[strlen(str) + 1];
+		strcpy(server.m_progs->m_lightstyles[i], str);
+	}
+
+	if (!parse_globaldefs()) {
+		sys.error("parse_globaldefs ERROR\n");
+	}
+
+	parse(false);
+
+	Client *client = server.client(0);
+	server.time(time);
+	for (int i = 0; i < NUM_SPAWN_PARMS; i++) {
+		client->m_spawn_parms[i] = spawn_parms[i];
+	}
 
 	return 0;
 }
