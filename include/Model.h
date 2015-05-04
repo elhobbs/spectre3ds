@@ -13,12 +13,13 @@ public:
 	q1_plane		operator-() const;
 
 	void			calc_signbits();
+	int				on_side(bbox &box);
 
 	fixed32p16		operator*(const vec3_t p);
 	fixed32p16		operator*(const vec3_fixed16 &p);
 	fixed32p16		operator*(const vec3_fixed32 &p);
 	norm3_fixed32	m_normal;
-	fixed16p3		m_dist;
+	fixed32p16		m_dist;
 	byte			m_type;
 	byte			m_signbits;
 };
@@ -83,7 +84,7 @@ inline fixed32p16 q1_plane::operator*(const vec3_fixed16 &p) {
 		((__int64_t)m_normal[1].x * p[1].x) +
 		((__int64_t)m_normal[2].x * p[2].x);
 
-	return fixed32p16((int)(val >> 11)) - fixed32p16((int)m_dist.x << 13);
+	return fixed32p16((int)(val >> 11)) - m_dist;
 }
 
 inline fixed32p16 q1_plane::operator*(const vec3_fixed32 &p) {
@@ -91,7 +92,7 @@ inline fixed32p16 q1_plane::operator*(const vec3_fixed32 &p) {
 		((__int64_t)m_normal[1].x * p[1].x) +
 		((__int64_t)m_normal[2].x * p[2].x);
 
-	return fixed32p16((int)(val >> 24)) - fixed32p16((int)m_dist.x << 13);
+	return fixed32p16((int)(val >> 24)) - m_dist;
 }
 
 typedef enum { mod_brush, mod_sprite, mod_alias, mod_max = 0xffffffff } modtype_t;

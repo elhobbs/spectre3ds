@@ -192,16 +192,15 @@ int q1Bsp::mark_visible_leafs(q1_leaf_node &leaf,int frame) {
 	for (int i = 0; i < m_num_leafs; i++) {
 		if (vis[i >> 3] & (1 << (i & 7)))
 		{
-			if (m_leafs[i + 1].m_visframe != frame) {
-				m_leafs[i + 1].m_visframe = frame;
-			}
+			m_leafs[i + 1].m_visframe = frame;
 			q1_node *node = m_leafs[i + 1].m_parent;
 			do
 			{
-			if (node->m_visframe == m_visframe)
-			break;
-			node->m_visframe = m_visframe;
-			node = node->m_parent;
+				if (node->m_visframe == frame) {
+					break;
+				}
+				node->m_visframe = frame;
+				node = node->m_parent;
 			} while (node);
 		}
 	}
@@ -1400,6 +1399,7 @@ int q1Bsp::load_faces() {
 		int num_edges = in_faces[i].numedges;
 		m_faces[i].m_num_points = num_edges;
 		m_faces[i].m_plane = &m_planes[in_faces[i].planenum];
+		m_faces[i].side = in_faces[i].side;
 		m_faces[i].m_lightmaps = &m_lighting[in_faces[i].lightofs];
 		for (int j = 0; j < MAXLIGHTMAPS; j++) {
 			m_faces[i].m_styles[j] = in_faces[i].styles[j];
@@ -1565,18 +1565,11 @@ void q1Bsp::build_lightmaps() {
 
 void q1_bsp_node::set_parent_r(q1_node *parent) {
 	m_parent = parent;
-	if (m_children[0]->m_contents < 0) {
-		((q1_leaf_node *)m_children[0])->m_parent = parent;
+	if (m_contents < 0) {
+		return;
 	}
-	else {
 		m_children[0]->set_parent_r(this);
-	}
-	if (m_children[1]->m_contents < 0) {
-		((q1_leaf_node *)m_children[1])->m_parent = parent;
-	}
-	else {
 		m_children[1]->set_parent_r(this);
-	}
 }
 
 int q1Bsp::load_nodes() {
@@ -1603,8 +1596,8 @@ int q1Bsp::load_nodes() {
 			}
 		}
 		for (int j = 0; j < 3; j++) {
-			m_nodes[i].m_bounds[0][j] = in[i].mins[j];
-			m_nodes[i].m_bounds[1][j] = in[i].maxs[j];
+			m_nodes[i].m_bounds[0][j] = (int)in[i].mins[j];
+			m_nodes[i].m_bounds[1][j] = (int)in[i].maxs[j];
 		}
 	}
 	delete[] in;
@@ -1745,8 +1738,8 @@ int q1Bsp::load_leafs() {
 		m_leafs[i].m_efrags = 0;
 		m_leafs[i].m_visframe = 0;
 		for (int j = 0; j < 3; j++) {
-			m_leafs[i].m_bounds[0][j] = in[i].mins[j] << 3;
-			m_leafs[i].m_bounds[1][j] = in[i].maxs[j] << 3;
+			m_leafs[i].m_bounds[0][j] = (int)in[i].mins[j];
+			m_leafs[i].m_bounds[1][j] = (int)in[i].maxs[j];
 		}
 		for (int j = 0; j < NUM_AMBIENTS; j++) {
 			m_leafs[i].m_ambient_sound_level[j] = in[i].ambient_level[j];

@@ -31,6 +31,11 @@ cvar_t	v_kicktime = { "v_kicktime", "0.5", false };
 cvar_t	v_kickroll = { "v_kickroll", "0.6", false };
 cvar_t	v_kickpitch = { "v_kickpitch", "0.6", false };
 
+cvar_t	dynamic_lights = { "dynamic_lights", "1", false };
+
+cvar_t	cstick_sensitivity = { "cstick_sensitivity", "0.6", true };
+cvar_t	nub_sensitivity = { "nub_sensitivity", "0.6", true };
+
 ClientState::ClientState() {
 	m_signon = 0;
 	m_state = ca_disconnected;
@@ -73,6 +78,11 @@ ClientState::ClientState() {
 	Cvar_RegisterVariable(&v_kicktime);
 	Cvar_RegisterVariable(&v_kickroll);
 	Cvar_RegisterVariable(&v_kickpitch);
+
+	Cvar_RegisterVariable(&dynamic_lights);
+
+	Cvar_RegisterVariable(&cstick_sensitivity);
+	Cvar_RegisterVariable(&nub_sensitivity);
 }
 
 void ClientState::bind_key(char *key, char *action) {
@@ -194,6 +204,28 @@ void  ClientState::in_move(usercmd_t &cmd) {
 		g_lastTouch.px = (g_lastTouch.px + g_currentTouch.px) / 2;
 		g_lastTouch.py = (g_lastTouch.py + g_currentTouch.py) / 2;
 	}
+	circlePosition nubPos = { 0, 0 };
+	irrstCstickRead(&nubPos);
+	if (abs(nubPos.dx) > 2 || abs(nubPos.dy) > 2) {
+		m_viewangles[YAW] -= nubPos.dx * m_yaw.value * nub_sensitivity.value;
+
+		m_viewangles[PITCH] -= nubPos.dy * m_pitch.value * nub_sensitivity.value;
+		if (m_viewangles[PITCH] > 80)
+			m_viewangles[PITCH] = 80;
+		if (m_viewangles[PITCH] < -70)
+			m_viewangles[PITCH] = -70;
+	}
+	circlePosition cstickPos = { 0, 0 };
+	circleRead(&cstickPos);
+	float speed = m_evh.actionState(ACTION_SPEED) ? cl_movespeedkey.value : 1;
+	float aspeed = speed * host.frame_time();
+	//host.printf("cs: %d %d %f\n", cstickPos.dx, cstickPos.dy, aspeed);
+	if (abs(cstickPos.dx) > 20) {
+		cmd.sidemove += m_side.value * cstickPos.dx * cstick_sensitivity.value * aspeed * cl_sidespeed.value;
+	}
+	if (abs(cstickPos.dy) > 20) {
+			cmd.forwardmove += m_forward.value * cstickPos.dy * cstick_sensitivity.value * aspeed * cl_forwardspeed.value;
+	}
 }
 void  ClientState::send_move(usercmd_t &cmd) {
 	NetBufferFixed<128> buf;
@@ -278,6 +310,8 @@ void ClientState::send_cmd() {
 
 void ClientState::reconnect() {
 	m_signon = 0;
+	m_mixer.stop_all();
+	m_music.stop();
 }
 
 void ClientState::music(char *cmdline) {
@@ -782,6 +816,8 @@ void ClientState::parse_server_info() {
 	m_view.clear();
 
 	m_view.set_world(m_worldmodel);
+
+	m_mixer.reset();
 	/*
 	R_NewMap();
 
@@ -789,6 +825,9 @@ void ClientState::parse_server_info() {
 
 	noclip_anglehack = false;		// noclip is turned off at start	*/
 
+	if (m_demoplayback) {
+		m_demo_endload_time = sys.seconds();
+	}
 }
 
 void ClientState::signon_reply() {

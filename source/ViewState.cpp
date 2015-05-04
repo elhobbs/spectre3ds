@@ -414,31 +414,49 @@ void ViewState::render_leaf(q1_leaf_node *leaf) {
 		face = leaf->m_first_face[i];
 		if (face->m_visframe != m_framecount) {
 			face->m_visframe = m_framecount;
+			fixed32p16 dot = *(face->m_plane) * m_camera;
+			if ((face->side == 0 && dot < 0) || (face->side != 0 && dot > 0)) {
+				continue;
+			}
 			render_face(face);
 		}
 	}
 }
 
-int ViewState::render_bsp_r(q1_bsp_node *node) {
+int ViewState::render_bsp_r(q1_bsp_node *node, unsigned int planebits) {
 	if (node == 0) {
 		return -1;
 	}
 	do {
-		if (node->m_contents != 0) {
-			q1_leaf_node *leaf = (q1_leaf_node *)node;
-			if (leaf->m_visframe == m_framecount) {
-				render_leaf(leaf);
-				store_efrags(leaf->m_efrags);
-			}
-			return -1;
+		int nodenum = node - m_worldmodel->m_nodes;
+		if (node->m_visframe != m_framecount) {
+			return 0;
+		}
+		if (node->m_contents == CONTENTS_SOLID) {
+			return 0;
+		}
+		if (node->m_contents < 0) {
+			break;
 		}
 
-		render_bsp_r(node->m_children[1]);
+		planebits = m_frustum.cull(node->m_bounds, planebits);
+		if (planebits == 0) {
+			return 0;
+		}
 
-		node = node->m_children[0];
+		render_bsp_r(node->m_children[0], planebits);
+
+		node = node->m_children[1];
 
 	} while (node);
 
+	if (node && node->m_contents < 0) {
+		q1_leaf_node *leaf = (q1_leaf_node *)node;
+		if (leaf->m_visframe == m_framecount) {
+			render_leaf(leaf);
+			store_efrags(leaf->m_efrags);
+		}
+	}
 	return 0;
 }
 
@@ -448,11 +466,9 @@ void ViewState::render_world(float *origin, float *angles) {
 	m_worldmodel->mark_visible_leafs(*m_viewleaf, m_framecount);
 
 	sys.renderMode.set_mode(bsp_mode);
-
-	render_bsp_r(&m_worldmodel->m_nodes[0]);
-
+	render_bsp_r(&m_worldmodel->m_nodes[0], 15);
 	sys.renderMode.set_mode(shader_mode);
-
+	
 	//update lightmap textures
 	load_dirty_lightmaps(m_worldmodel);
 }
@@ -521,6 +537,9 @@ void ViewState::load_dirty_lightmaps(q1Bsp *bsp) {
 	}
 
 }
+
+float CalcFov(float fov_x, float width, float height);
+
 void ViewState::render(float *origin, float *angles) {
 
 	vec3_t forward, right, up;
@@ -531,6 +550,8 @@ void ViewState::render(float *origin, float *angles) {
 	m_forward = forward;
 	m_right = right;
 	m_up = up;
+
+	m_frustum.transform(origin, forward, right, up, 80.0f, CalcFov(80.0f,400.0f,240.0f));
 
 	m_draw_sky = false;
 

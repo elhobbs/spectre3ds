@@ -24,11 +24,12 @@ void ClientState::stop_demo() {
 	m_music.stop();
 
 	if (m_demo_time) {
-		host.printf("%ctimedemo: %d frames in %0.4f seconds. %0.4f fps\n", 
-			2, 
+		host.printf("%cloadtime: %0.4f seconds\n",2, m_demo_endload_time - m_demo_starttime);
+		host.printf("%ctimedemo: %d frames in %0.4f seconds.\n%0.4f fps\n",
+			2,
 			frame_count - m_demo_frame_start,
-			end - m_demo_starttime,
-			(float)(frame_count - m_demo_frame_start) / (end - m_demo_starttime));
+			end - m_demo_endload_time,
+			(float)(frame_count - m_demo_frame_start) / (end - m_demo_endload_time));
 		m_demo_time = false;
 	}
 }

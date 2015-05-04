@@ -154,7 +154,7 @@ void DLights::light_face(q1_face *face, unsigned int *bl) {
 }
 
 void DLights::light_face(q1_face *face, int *color) {
-		if (face->m_dlightframe != m_framecount) {
+	if (face->m_dlightframe != m_framecount) {
 		return;
 	}
 	//if (strstr(face->m_texinfo->m_miptex->m_name, "quake")) {
@@ -317,6 +317,9 @@ void DLights::mark_light(DLight *dl, int bit, q1_bsp_node *node) {
 }
 
 void DLights::mark_lights(q1_bsp_node *node) {
+	if (!m_dynamic) {
+		return;
+	}
 	DLight *dl = m_list;
 	double cl_time = host.cl_time();
 

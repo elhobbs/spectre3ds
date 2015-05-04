@@ -6,6 +6,7 @@
 #include "q1Bsp.h"
 #include "cvar.h"
 #include "Dlight.h"
+#include "Frustum.h"
 
 extern cvar_t	r_ambient;
 extern cvar_t	r_fullbright;
@@ -85,7 +86,7 @@ private:
 	void render_sprite(entity_t *ent);
 	void render_mdl(entity_t *ent);
 	void render_bsp(entity_t *ent);
-	int	render_bsp_r(q1_bsp_node *node);
+	int	render_bsp_r(q1_bsp_node *node, unsigned int planebits);
 	void render_leaf(q1_leaf_node *leaf);
 	void render_face(q1_face *face,int framenum=0);
 	void render_particles();
@@ -107,6 +108,8 @@ private:
 
 	vec3_fixed32	m_camera;
 	vec3_fixed32	m_forward, m_right, m_up;
+	Frustum			m_frustum;
+
 
 	int				m_ambient;
 	int				m_fullbright;

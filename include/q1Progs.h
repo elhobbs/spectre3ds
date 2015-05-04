@@ -77,10 +77,9 @@ public:
 		ddef_t *ED_FindGlobal(char *name);
 
 
-
 		char *PF_VarString(int	first);
 		void SetMinMaxSize(edict_t *e, float *min, float *max, bool rotate);
-		void SetMinMaxSize(edict_t *e, vec3_fixed16 &min, vec3_fixed16 &max, bool rotate);
+		void SetMinMaxSize(edict_t *e, vec3_fixed32 &min, vec3_fixed32 &max, bool rotate);
 		int PF_newcheckclient(int check);
 		void PR_CheckEmptyString(char *s);
 		edict_t* find(char *classname);

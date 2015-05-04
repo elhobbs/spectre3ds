@@ -6,11 +6,15 @@
 #include <crtdbg.h>
 #endif
 #include "Sound.h"
+#include "keyboard.h"
 
 SYS sys;
 Host host;
 memPool pool(16 * 1024 * 1024);
 memPool linear;
+void new_game() {
+	host.execute("map start");
+}
 
 void spectre_main() {
 	int frame = 0;
@@ -19,16 +23,14 @@ void spectre_main() {
 
 	sys.init();
 	host.init();
-	//host.execute("map e1m2");
+	host.execute("music track 3");
+	keyboard_bind(K_F2, new_game);
+
 	do {
 		new_time = sys.seconds();
 		diff = new_time - old_time;
-		//printf("frame: %d %f\n", frame++, diff);
-		//printf("  diff %d\n", (int)(diff*1000));
-		//if (diff > 0.001) {
-			host.frame(diff);
-			old_time = new_time;
-		//}
+		host.frame(diff);
+		old_time = new_time;
 
 	} while (!sys.quiting());
 

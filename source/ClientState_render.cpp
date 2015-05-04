@@ -233,6 +233,10 @@ void ClientState::render(frmType_t type) {
 		m_mixer.update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
 		return;
 	}
+	//extra update
+	m_mixer.update();
+	m_music.update();
+
 	float slider = CONFIG_3D_SLIDERSTATE;
 	entity_t *cl = entity_num(m_viewentity);
 	vec3_t org, ang, vieworg;
@@ -274,6 +278,10 @@ void ClientState::render(frmType_t type) {
 	m_view.m_dlights.dynamic(false);
 	m_framecount++;
 
+	//extra update
+	m_mixer.update();
+	m_music.update();
+
 }
 
 void ClientState::frame_start() {
@@ -286,9 +294,10 @@ void ClientState::frame_start() {
 		return;
 	}
 
+	bool dynamic = dynamic_lights.value ? true : false;
 
 	m_view.animate_lights(cl_lightstyle);
-	m_view.m_dlights.dynamic(true);
+	m_view.m_dlights.dynamic(dynamic);
 	m_view.m_dlights.mark_lights(m_worldmodel->m_nodes);
 
 	entity_t *cl = entity_num(m_viewentity);

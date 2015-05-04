@@ -12,8 +12,10 @@ public:
 	fixed &		operator=( const fixed &a );
 	fixed &		operator=( const float a );
 	fixed &		operator=( const int a );
-	fixed			operator*( const fixed &a ) const;
-	fixed			operator*( const float a ) const;
+	fixed			operator*(const fixed<short, 3> &a) const;
+	fixed			operator*(const fixed<int, 16> &a) const;
+	fixed			operator*(const fixed<int, 24> &a) const;
+	fixed			operator*(const float a) const;
 	fixed			operator/( const fixed &a ) const;
 	fixed			operator/(const float a) const;
 	fixed			operator/(const int a) const;
@@ -28,6 +30,9 @@ public:
 	fixed &		operator/=(const int a);
 	fixed &		operator*=(const float a);
 	fixed &		operator*=( const fixed &a );
+
+	fixed<int, 16> multiply16(fixed<short, 3> &a);
+	fixed<int, 16> multiply3(fixed<short, 3> &a);
 
 
 	bool			operator==(const fixed &a) const;						// exact compare, no epsilon
@@ -119,6 +124,22 @@ template<>
 inline fixed<int, 24> fixed<int, 24>::operator*(const fixed<int, 24> &a) const {
 	return fixed((int)(((__int64_t)x * a.x) >> 24));
 }
+
+template<>
+inline fixed<int, 24> fixed<int, 24>::operator*(const fixed<short, 3> &a) const {
+	return fixed((int)(((__int64_t)x * a.x) >> 3));
+}
+
+template <>
+inline fixed<int, 16> fixed<int, 24>::multiply16(fixed<short, 3> &a) {
+	return fixed<int, 16>((int)(((__int64_t)x * a.x) >> 11));
+}
+
+template <>
+inline fixed<int, 16> fixed<int, 24>::multiply3(fixed<short, 3> &a) {
+	return fixed<int, 16>((int)(((__int64_t)x * a.x) >> 11));
+}
+
 
 template <typename T, int p>
 inline fixed<T,p> fixed<T,p>::operator*(const float a) const {

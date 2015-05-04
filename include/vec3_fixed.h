@@ -28,6 +28,7 @@ public:
 	vec3_fixed<int, 16>		multiply(vec3_fixed<short, 12> &a);
 	vec3_fixed<int, 16>		scale(fixed<int, 16> &a);
 	fixed<int, 16>			dot(const vec3_fixed<short, 12> &a) const;
+	fixed<int, 16>			dot(const vec3_fixed<short, 3> &a) const;
 private:
 	fixed<T,p> x, y, z;
 };
@@ -220,6 +221,16 @@ inline vec3_fixed<int, 16> vec3_fixed<int, 16>::scale(fixed<int, 16> &a) {
 }
 
 template<>
+inline fixed<int, 16> vec3_fixed<int, 24>::dot(const vec3_fixed<short, 3> &a) const {
+	__int64_t val;
+
+	val = ((((__int64_t)x.x * (__int64_t)a[0].x)) >> 11) +
+		((((__int64_t)y.x * (__int64_t)a[1].x)) >> 11) +
+		((((__int64_t)z.x * (__int64_t)a[2].x)) >> 11);
+	return fixed<int, 16>((int)val);
+}
+
+template<>
 inline fixed<int, 16> vec3_fixed<int, 16>::dot(const vec3_fixed<short, 12> &a) const {
 	__int64_t val;
 
@@ -252,20 +263,20 @@ class bbox {
 public:
 	bbox(void);
 
-	vec3_fixed16  operator[](const int index) const;
-	vec3_fixed16 &operator[](const int index);
-	bbox & operator+=(const vec3_fixed16 &v);
+	vec3_fixed32  operator[](const int index) const;
+	vec3_fixed32 &operator[](const int index);
+	bbox & operator+=(const vec3_fixed32 &v);
 
 	bool Intersects(const bbox &b) const;
 	void grow(float d);
-	void grow(vec3_fixed16 &v);
+	void grow(vec3_fixed32 &v);
 	bbox & operator+=(const bbox &a);
-	fixed16p3 radius();
+	fixed32p16 radius();
 private:
-	vec3_fixed16	b[2];
+	vec3_fixed32	b[2];
 public:
-	vec3_fixed16 bmin() { return b[0]; }
-	vec3_fixed16 bmax() { return b[1]; }
+	vec3_fixed32 bmin() { return b[0]; }
+	vec3_fixed32 bmax() { return b[1]; }
 	void	init();
 };
 
@@ -273,25 +284,25 @@ inline bbox::bbox(void) {
 	init();
 }
 inline void bbox::init(void) {
-	b[0] = vec3_fixed16(MAX_WORLD_SIZE, MAX_WORLD_SIZE, MAX_WORLD_SIZE);
-	b[1] = vec3_fixed16(-MAX_WORLD_SIZE, -MAX_WORLD_SIZE, -MAX_WORLD_SIZE);
+	b[0] = vec3_fixed32(MAX_WORLD_SIZE, MAX_WORLD_SIZE, MAX_WORLD_SIZE);
+	b[1] = vec3_fixed32(-MAX_WORLD_SIZE, -MAX_WORLD_SIZE, -MAX_WORLD_SIZE);
 }
 
 inline void bbox::grow(float d) {
-	b[0] -= vec3_fixed16(d, d, d);
-	b[1] += vec3_fixed16(d, d, d);
+	b[0] -= vec3_fixed32(d, d, d);
+	b[1] += vec3_fixed32(d, d, d);
 }
 
-inline void bbox::grow(vec3_fixed16 &v) {
+inline void bbox::grow(vec3_fixed32 &v) {
 	b[0] -= v;
 	b[1] += v;
 }
 
-inline vec3_fixed16 bbox::operator[](const int index) const {
+inline vec3_fixed32 bbox::operator[](const int index) const {
 	return b[index];
 }
 
-inline vec3_fixed16 &bbox::operator[](const int index) {
+inline vec3_fixed32 &bbox::operator[](const int index) {
 	return b[index];
 }
 
@@ -317,7 +328,7 @@ inline bbox &bbox::operator+=(const bbox &a) {
 	return *this;
 }
 
-inline bbox &bbox::operator+=(const vec3_fixed16 &v) {
+inline bbox &bbox::operator+=(const vec3_fixed32 &v) {
 	if (v[0] < b[0][0]) {
 		b[0][0] = v[0];
 	}
@@ -347,10 +358,10 @@ inline bool bbox::Intersects(const bbox &a) const {
 	return true;
 }
 
-inline fixed16p3 bbox::radius()
+inline fixed32p16 bbox::radius()
 {
 	int i;
-	vec3_fixed16 corner;
+	vec3_fixed32 corner;
 
 	for (i = 0; i<3; i++)
 	{

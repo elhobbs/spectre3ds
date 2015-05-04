@@ -20,9 +20,15 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 export TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source arm11/source helix/fixpt helix/fixpt/real helix/fixpt/real/arm 3d
+SOURCES		:=	source arm11/source helix/fixpt helix/fixpt/real helix/fixpt/real/arm 3d khax
 DATA		:=	data
-INCLUDES	:=	include arm11/include helix/fixpt/pub 3d glm
+INCLUDES	:=	include arm11/include helix/fixpt/pub 3d glm khax
+APP_TITLE	:=	spectre3ds
+APP_DESCRIPTION	:= quake for the 3ds
+APP_AUTHOR	:= elhobbs
+
+
+export	OUTPUT_FORMAT	?= 3dsx
 
 
 #---------------------------------------------------------------------------------
@@ -126,17 +132,34 @@ clean:
 	@rm -fr $(BUILD) $(TARGET).3dsx $(TARGET).elf
  
  
+ cia:
+		@make $(MAKEFLAGS) OUTPUT_FORMAT=cia
+
+ 3dsx:
+		@make $(MAKEFLAGS) OUTPUT_FORMAT=3dsx
+
 #---------------------------------------------------------------------------------
 else
  
 DEPENDS	:=	$(OFILES:.o=.d)
 
- 
+.PHONY: all
+
+all:	$(OUTPUT).$(OUTPUT_FORMAT)
+
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).3dsx	:	$(OUTPUT).elf $(OUTPUT).smdh
 $(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT).cia	:	$(OUTPUT).elf
+	@echo built ... $< $@ 
+	@echo $(notdir $(OUTPUT))
+	@cp $(OUTPUT).elf $(TARGET)_stripped.elf
+	arm-none-eabi-strip $(TARGET)_stripped.elf
+	$(TOPDIR)\resources\makerom.exe -f cci -rsf $(TOPDIR)\resources\gw_workaround.rsf -target d -exefslogo -elf $(TARGET)_stripped.elf -icon $(TOPDIR)\resources\icon.bin -banner $(TOPDIR)\resources\banner.bin -o $(TOPDIR)\$(notdir $(OUTPUT)).3ds
+	$(TOPDIR)\resources\makerom.exe -f cia -o $(OUTPUT).cia -elf $(TARGET)_stripped.elf -rsf $(TOPDIR)\resources\build_cia.rsf -icon $(TOPDIR)\resources\icon.bin -banner $(TOPDIR)\resources\banner.bin -exefslogo -target t
+#	@echo built ... $(notdir $@)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data 
@@ -163,13 +186,4 @@ $(OUTPUT).elf	:	$(OFILES)
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
-
-#---------------------------------------------------------------------------------
-%.cia: %.elf
-	@echo built ... $< $@ 
-	@echo $(notdir $(OUTPUT))
-	arm-none-eabi-strip $<
-	$(TOPDIR)\resources\makerom.exe -f cci -rsf $(TOPDIR)\resources\gw_workaround.rsf -target d -exefslogo -elf $< -icon $(TOPDIR)\resources\icon.bin -banner $(TOPDIR)\resources\banner.bin -o $(TOPDIR)\$(notdir $(OUTPUT)).3ds
-	$(TOPDIR)\resources\makerom.exe -f cia -o $(OUTPUT).cia -elf $< -rsf $(TOPDIR)\resources\build_cia.rsf -icon $(TOPDIR)\resources\icon.bin -banner $(TOPDIR)\resources\banner.bin -exefslogo -target t
-#	@echo built ... $(notdir $@)
 

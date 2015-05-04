@@ -14,7 +14,7 @@ void Mixer::init() {
 #endif
 
 #ifdef ARM11
-	MixerHardware3DS *p3ds = new MixerHardware3DS(8,11025,2);
+	MixerHardware3DS *p3ds = new MixerHardware3DS(16,11025,2);
 	p3ds->init();
 	m_hw = reinterpret_cast<MixerHardware *>(p3ds);
 #endif
@@ -34,19 +34,19 @@ void Mixer::shutdown() {
 
 void Mixer::reset() {
 	stop_all();
-	m_sound_time = 0;
-	m_paint_time = 0;
+	m_sound_time = m_paint_time = 0;
 	for (int i = 0; i < NUM_AMBIENTS; i++) {
 		m_ambients[i] = 0;
 	}
-	m_hw->flush();
+	//m_hw->stop();
+	//m_hw->start();
 }
 
 
 int Mixer::pick_channel(int entnum, int entchannel) {
 	int view_entity = host.cl_view_entity();
 	int first_to_die = -1;
-	int life_left = 0x7fffffff;
+	s64 life_left = INT64_MAX;
 	for (int ch_idx = NUM_AMBIENTS; ch_idx < NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS; ch_idx++) {
 		if (entchannel != 0		// channel 0 never overrides
 			&& m_channels[ch_idx].entnum == entnum
@@ -61,7 +61,8 @@ int Mixer::pick_channel(int entnum, int entchannel) {
 			continue;
 		}
 
-		if (m_channels[ch_idx].end - m_paint_time < life_left) {
+		//printf("%d %lld %lld %016llX\n", ch_idx, m_paint_time, m_channels[ch_idx].end, m_channels[ch_idx].end - m_paint_time);
+		if ((s64)(m_channels[ch_idx].end - m_paint_time) < life_left) {
 			life_left = m_channels[ch_idx].end - m_paint_time;
 			first_to_die = ch_idx;
 		}
@@ -85,6 +86,7 @@ void Mixer::start(int entnum, int entchannel, Sound *sfx, vec3_t origin, float f
 	}
 	int channelnum = pick_channel(entnum, entchannel);
 	if (channelnum == -1) {
+		//printf("no channel\n");
 		return;
 	}
 	channel_t *ch = &m_channels[channelnum];
@@ -99,6 +101,8 @@ void Mixer::start(int entnum, int entchannel, Sound *sfx, vec3_t origin, float f
 	ch->master_vol = (int)(fvol * 255);
 
 	spatialize(ch);
+
+	//printf("%s %6d %6d\n", sfx->name(), ch->leftvol, ch->rightvol);
 }
 
 void Mixer::start_static(Sound *sfx, vec3_t origin, float fvol, float attenuation) {
@@ -119,7 +123,7 @@ void Mixer::start_static(Sound *sfx, vec3_t origin, float fvol, float attenuatio
 	spatialize(ch);
 }
 
-void Mixer::transfer_paint_buffer(int endtime) {
+void Mixer::transfer_paint_buffer(u64 endtime) {
 
 	int count = endtime - m_paint_time;
 
@@ -187,11 +191,11 @@ void Mixer::paint_channel(channel_t *ch, int count) {
 	ch->pos += count;
 }
 
-void Mixer::paint_channels(int endtime) {
+void Mixer::paint_channels(u64 endtime) {
 	int count;
 	int mixed = 0;
 	while (m_paint_time < endtime) {
-		int end = endtime;
+		u64 end = endtime;
 		//if the paint buffer is smaller
 		if (endtime - m_paint_time > PAINTBUFFER_SIZE) {
 			end = m_paint_time + PAINTBUFFER_SIZE;
@@ -204,11 +208,12 @@ void Mixer::paint_channels(int endtime) {
 			if (!ch->sfx) {
 				continue;
 			}
+			//printf("mixing: %s %lld %lld\n", ch->sfx->name(), m_paint_time, ch->end);
 			if (ch->leftvol <= 0 && ch->rightvol <= 0) {
 				continue;
 			}
 			mixed++;
-			int ltime = m_paint_time;
+			u64 ltime = m_paint_time;
 			while (ltime < end) {
 				// paint up to end
 				if (ch->end < end) {
@@ -243,23 +248,22 @@ void Mixer::paint_channels(int endtime) {
 	//host.printf("mixed: %d\n", mixed);
 }
 
-int Mixer::sample_pos() {
+u64 Mixer::sample_pos() {
 	return m_hw->samplepos();
 }
 
 void Mixer::update() {
+	u64 last = m_sound_time;
 	m_sound_time = sample_pos();
+	//printf("%8d %8d\n",m_sound_time - last, m_speed/16);
 
-	//printf("update: %08d\n", m_sound_time);
-
+	u64 endtime = m_sound_time + m_speed * mixahead.value;
 	if (m_paint_time < m_sound_time) {
+		printf("\nsnd %8lld %8lld %8lld\n\n", m_sound_time, m_paint_time, endtime);
 		m_paint_time = m_sound_time;
 	}
 
-	unsigned endtime = m_sound_time + (0.1f * m_speed);
-	if ((int)(endtime - m_sound_time) > m_samples) {
-		endtime = m_sound_time + m_samples;
-	}
+	//printf("%8lld %8lld %8lld %6lld\n", m_sound_time, m_paint_time, endtime, endtime - m_paint_time);
 
 	paint_channels(endtime);
 }
@@ -397,9 +401,13 @@ void Mixer::stop_all() {
 	for (int i = 0; i < MAX_CHANNELS; i++) {
 		if (m_channels[i].sfx) {
 			m_channels[i].sfx = 0;
+			m_channels[i].end = 0;
 		}
 	}
 
+	if (m_hw) {
+		m_hw->flush();
+	}
 	//memset(m_buffer_left, 0, sizeof(m_buffer_left));
 	//memset(m_buffer_right, 0, sizeof(m_buffer_right));
 }

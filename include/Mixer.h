@@ -7,7 +7,7 @@ typedef struct
 	Sound	*sfx;			// sfx number
 	int		leftvol;		// 0-255 volume
 	int		rightvol;		// 0-255 volume
-	int		end;			// end time in global paintsamples
+	u64		end;			// end time in global paintsamples
 	int 	pos;			// sample position in sfx
 	int		looping;		// where to loop, -1 = no looping
 	int		entnum;			// to allow overriding a specific sound
@@ -34,7 +34,7 @@ typedef struct
 #define	MAX_CHANNELS			128
 #define	MAX_DYNAMIC_CHANNELS	8
 
-#define MIXER_BUFFER_LEN		4096
+#define MIXER_BUFFER_LEN		16384
 
 #ifdef WIN32
 #define MIXER_SPEED				11000
@@ -61,8 +61,8 @@ public:
 
 private:
 	int			m_snd_scaletable[32][256];
-	int			m_sound_time;
-	int			m_paint_time;
+	u64			m_sound_time;
+	u64			m_paint_time;
 	int			m_samples;
 	int			m_speed;
 	portable_samplepair_t m_paintbuffer[PAINTBUFFER_SIZE];
@@ -70,9 +70,9 @@ private:
 	int			pick_channel(int ent, int entchannel);
 	void		init_scale_table(void);
 	void		paint_channel(channel_t *ch, int count);
-	void		paint_channels(int endtime);
-	void		transfer_paint_buffer(int endtime);
-	int			sample_pos();
+	void		paint_channels(u64 endtime);
+	void		transfer_paint_buffer(u64 endtime);
+	u64			sample_pos();
 	void		spatialize(channel_t *ch);
 	void		update_ambient_sounds();
 

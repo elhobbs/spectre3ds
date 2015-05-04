@@ -33,8 +33,8 @@ static int buttonMap3ds[] = {
 	'l',
 	'x',
 	'y',
-	0,
-	0,
+	'q',
+	'e',
 	K_ALT,
 	K_CTRL,
 	0,
@@ -45,14 +45,14 @@ static int buttonMap3ds[] = {
 	0,
 	0,
 	0,
-	K_RIGHTARROW,
-	K_LEFTARROW,
-	K_UPARROW,
-	K_DOWNARROW,
-	K_RIGHTARROW,
-	K_LEFTARROW,
-	K_UPARROW,
-	K_DOWNARROW
+	K_MOUSE1,
+	K_MOUSE2,
+	K_MOUSE3,
+	K_MOUSE4,
+	K_JOY1,
+	K_JOY2,
+	K_JOY3,
+	K_JOY4
 };
 
 int SYS::queue_events() {

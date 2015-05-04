@@ -9,6 +9,8 @@
 #include "memPool.h"
 #include "cache.h"
 
+#include "khax.h"
+
 cache textureCache;
 cache vboCache;
 
@@ -187,14 +189,25 @@ int SYS::init() {
 	Result ret = 0;
 
 	gfxInitDefault();
+	consoleInit(GFX_BOTTOM, 0);
+	gfxSwapBuffers();
+	
+	Result result = khaxInit();
+	::printf("khaxInit returned %08lx\n", result);
+
+	//aptOpenSession();
+	//result = APT_SetAppCpuTimeLimit(NULL, 80);
+	//aptCloseSession();
+	//::printf("%08X\n", (unsigned int)result);
+
+	svcSleepThread(2000000000);
+	
 	GPU_Init(NULL);
 
 	gfxSet3D(true);
 	
 	// clear upper screen (black) instead of junk
 	//con_init(true);
-	consoleInit(GFX_BOTTOM, 0);
-	gfxSwapBuffers();
 	__gspWaitForVBlank();
 	keyboard_init();
 
@@ -261,6 +274,7 @@ int SYS::shutdown() {
 	timer_shutdown();
 	
 	gsExit();
+	khaxExit();
 	gfxExit();
 
 	return ret;

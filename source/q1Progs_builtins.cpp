@@ -327,7 +327,7 @@ void q1Progs::SetMinMaxSize(edict_t *e, float *min, float *max, bool rotate)
 	m_sv.link_edict(e, false);
 }
 
-void q1Progs::SetMinMaxSize(edict_t *e, vec3_fixed16 &min, vec3_fixed16 &max, bool rotate)
+void q1Progs::SetMinMaxSize(edict_t *e, vec3_fixed32 &min, vec3_fixed32 &max, bool rotate)
 {
 	float	*angles;
 	vec3_t	rmin, rmax;

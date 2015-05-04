@@ -48,11 +48,11 @@ SV_CreateAreaNode
 
 ===============
 */
-areanode_t *Server::CreateAreaNode(int depth, vec3_fixed16 &mins, vec3_fixed16 &maxs)
+areanode_t *Server::CreateAreaNode(int depth, vec3_fixed32 &mins, vec3_fixed32 &maxs)
 {
 	areanode_t	*anode;
-	vec3_fixed16		size;
-	vec3_fixed16		mins1, maxs1, mins2, maxs2;
+	vec3_fixed32		size;
+	vec3_fixed32		mins1, maxs1, mins2, maxs2;
 
 	anode = &sv_areanodes[sv_numareanodes];
 	sv_numareanodes++;

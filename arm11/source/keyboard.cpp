@@ -3,16 +3,11 @@
 #include "input.h"
 #include <ctype.h>
 
-typedef struct {
-	int x, y, type, dx, key;
-	char *text, *shift_text;
-} sregion_t;
-
 void keyboard_draw_region(sregion_t *region, int index, u16 c);
 
 
 int keyboard_visible_last = 0;
-int	keyboard_visible = 1; //0=hidden,1=fullsize,2=mini - numbers only
+int	keyboard_visible = 1; //0=hidden,1=fullsize,2=mini - numbers only, 3=menu
 
 
 static char key_buttons[] = "1234567890";
@@ -65,6 +60,21 @@ static sregion_t key_array[] = {
 	{ 270, 4 * 16, 6, 0, 0x200, 0 },
 };
 
+static char key_console[] = "Console";
+static char key_new[] = "New Game";
+static char key_load[] = "Load Game";
+static char key_save[] = "Save Game";
+static char key_quit[] = "Quit";
+
+static sregion_t key_array2[] = {
+	{ 48, 0 * 16, 1, 0, K_F1, key_console },
+	{ 48, 1 * 16, 1, 0, K_F2, key_new },
+	{ 48, 2 * 16, 1, 0, K_F3, key_load },
+	{ 48, 3 * 16, 1, 0, K_F4, key_save },
+	{ 48, 4 * 16, 1, 0, K_F5, key_quit },
+	{ 270, 0, 6, 0, 0x200, 0 },
+};
+
 static u16 keyboard_fg = RGB8_to_565(192, 192, 192);
 static u16 keyboard_bg = RGB8_to_565(204, 102, 0);
 
@@ -109,13 +119,14 @@ void keyboard_init()
 
 	for (i = 0; i<count; i++)
 	{
+		key_array[i].func = 0;
 		switch (key_array[i].type) {
 		case 0:
 			len = strlen(key_array[i].text) * 16;
 			key_array[i].dx = len;
 			break;
 		case 1:
-			len = strlen(key_array[i].text) * 8 + 4;
+			len = strlen(key_array[i].text) * 8 + 6;
 			key_array[i].dx = len;
 			break;
 		default:
@@ -129,6 +140,47 @@ void keyboard_init()
 	keyboard_hofs = 32;
 	if (keyboard_visible == 2) {
 		keyboard_vofs = 216;
+	}
+	
+	count = sizeof(key_array2) / sizeof(sregion_t);
+
+	for (i = 0; i<count; i++)
+	{
+		key_array2[i].func = 0;
+		switch (key_array2[i].type) {
+		case 0:
+			len = strlen(key_array2[i].text) * 16;
+			key_array[i].dx = len;
+			break;
+		case 1:
+			len = strlen(key_array2[i].text) * 8 + 6;
+			key_array2[i].dx = len;
+			break;
+		default:
+			key_array2[i].dx = 16;
+		}
+	}
+}
+
+void keyboard_bind(int key, keyboard_func func) {
+	int i, count = sizeof(key_array) / sizeof(sregion_t);
+
+	for (i = 0; i<count; i++)
+	{
+		if (key_array[i].key == key) {
+			key_array[i].func = func;
+			return;
+		}
+	}
+	
+	count = sizeof(key_array2) / sizeof(sregion_t);
+
+	for (i = 0; i<count; i++)
+	{
+		if (key_array2[i].key == key) {
+			key_array2[i].func = func;
+			return;
+		}
 	}
 }
 
@@ -148,7 +200,7 @@ void keyboard_mark(sregion_t *region, int index, int in_touch) {
 			case 0x200:
 				//change the keyboard layout
 				keyboard_visible++;
-				if (keyboard_visible > 2) {
+				if (keyboard_visible > 3) {
 					keyboard_visible = 1;
 				}
 				//clear touch to avoid layout change issues
@@ -227,6 +279,10 @@ int keyboard_scankeys()
 		region = key_button_array;
 		count = 2;
 	}
+	else if (keyboard_visible == 3) {
+		count = sizeof(key_array2) / sizeof(sregion_t);
+		region = key_array2;
+	}
 
 	for (i = 0; i<count; i++)
 	{
@@ -267,6 +323,9 @@ int keyboard_scankeys()
 			break;
 		}
 
+		if (key_touching->func) {
+			key_touching->func();
+		}
 		return key_down;
 	}
 
@@ -417,7 +476,7 @@ void keyboard_draw_region(sregion_t *region, int index, u16 c) {
 			c = keyboard_fg;
 		}
 		ch = region->text;
-		len = strlen(ch) * 8 + 4;
+		len = strlen(ch) * 8 + 6;
 
 		//left/right sides
 		vline(x, y + 1, 14, c);
@@ -534,8 +593,10 @@ void keyboard_draw()
 		region = key_button_array;
 		count = 2;
 	}
-
-
+	else if (keyboard_visible == 3) {
+		count = sizeof(key_array2) / sizeof(sregion_t);
+		region = key_array2;
+	}
 
 	for (i = 0; i<count; i++)
 	{

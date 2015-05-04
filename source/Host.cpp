@@ -22,6 +22,8 @@ cvar_t  debug = { "debug", "0" };
 cvar_t	maxfps = { "maxfps", "60", true };
 cvar_t	v_gamma = { "gamma", "0.7", true };
 cvar_t	hud_alpha = { "hud_alpha", "0.3", true };
+cvar_t	mixahead = { "mixahead", "0.1", false };
+cvar_t	dynamic_textures = { "dynamic_textures", "1", false };
 
 void Host::clear() {
 	m_notify.clear();
@@ -228,11 +230,13 @@ void Host::render() {
 	int frames = slider > 0.0f ? 2 : 1;
 	frmType_t type[] = { FRAME_LEFT, FRAME_RIGHT };
 
-	TIMING_START(t0,"proctex");
+	if (dynamic_textures.value) {
+		TIMING_START(t0, "proctex");
 
-	proc_textures.update();
+		proc_textures.update();
 
-	TIMING_STOP(t0);
+		TIMING_STOP(t0);
+	}
 
 
 	TIMING_START(t1, "fstart");
@@ -498,6 +502,14 @@ void Host::choose_game_dir() {
 			break;
 		}
 	}
+	//eat all of the keys events
+	//or the console will get the last button pressed
+	do {
+		scanKeys();
+		pressed = keysDown() | keysHeld();
+		gspWaitForVBlank();
+	} while (pressed);
+
 	gfxFlushBuffers();
 	gfxSwapBuffers();
 	gspWaitForEvent(GSPEVENT_VBlank0, false);

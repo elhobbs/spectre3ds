@@ -53,6 +53,8 @@ extern cvar_t	v_kicktime;
 extern cvar_t	v_kickroll;
 extern cvar_t	v_kickpitch;
 
+extern cvar_t	dynamic_lights;
+
 typedef enum {
 	ca_dedicated, 		// a dedicated server with no ability to start a client
 	ca_disconnected, 	// full screen console with no connection
@@ -204,6 +206,7 @@ private:
 	int				m_demo_frame_start;
 	bool			m_demo_time;
 	float			m_demo_starttime;
+	float			m_demo_endload_time;
 	sysFile			*m_demo_file;
 	bool			m_demoplayback;
 

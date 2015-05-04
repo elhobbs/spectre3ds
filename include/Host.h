@@ -16,6 +16,8 @@ extern cvar_t	debug;
 extern cvar_t	maxfps;
 extern cvar_t	v_gamma;
 extern cvar_t	hud_alpha;
+extern cvar_t	mixahead;
+extern cvar_t	dynamic_textures;
 
 class Host {
 public:
@@ -109,6 +111,8 @@ inline Host::Host():m_cmds(this) {
 	Cvar_RegisterVariable(&maxfps);
 	Cvar_RegisterVariable(&v_gamma);
 	Cvar_RegisterVariable(&hud_alpha);
+	Cvar_RegisterVariable(&mixahead);
+	Cvar_RegisterVariable(&dynamic_textures);
 
 	m_cmds.add("changelevel", &Host::change_level);
 	m_cmds.add("restart", &Host::restart);

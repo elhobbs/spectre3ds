@@ -16,7 +16,7 @@
 typedef struct areanode_s
 {
 	int					axis;		// -1 = leaf node
-	fixed16p3			dist;
+	fixed32p16			dist;
 	struct areanode_s	*children[2];
 	link_t				trigger_edicts;
 	link_t				solid_edicts;
@@ -148,7 +148,7 @@ public:
 	hull_t		*hull_for_box(vec3_t mins, vec3_t maxs);
 	hull_t		*hull_for_entity(edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset);
 	void		init_box_hull();
-	areanode_t *CreateAreaNode(int depth, vec3_fixed16 &mins, vec3_fixed16 &maxs);
+	areanode_t *CreateAreaNode(int depth, vec3_fixed32 &mins, vec3_fixed32 &maxs);
 	void		ClearWorld(void);
 
 	int			hull_point_contents(hull_t *hull, int num, vec3_t p);

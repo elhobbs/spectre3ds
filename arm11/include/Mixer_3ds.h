@@ -13,9 +13,11 @@ public:
 	void init();
 	void shutdown();
 	void flush();
+	void start();
+	void stop();
 	void update(int *pAudioData, int count);
 	void update(short *pAudioData, int count);
-	int samplepos();
+	u64 samplepos();
 	void clear();
 	byte *buffer();
 private:
@@ -24,9 +26,11 @@ private:
 	int m_speed;
 	bool m_initialized;
 
-	u32				m_lastPos;
 	u64				m_start;
 	u64				m_soundPos;		//the sound position
+	u32				m_lastPos;
+	u64				m_soundPos2;		//the sound position
+	u64				m_lastPos2;
 	u64				m_bufferPos;	//the write position
 	int				m_bufferSize;	// the size of soundBuffer
 	byte			*m_soundBuffer;	// the buffer itself
