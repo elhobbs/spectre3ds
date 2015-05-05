@@ -628,13 +628,15 @@ void ViewState::render(float *origin, float *angles) {
 		//printf("render_world+\n");
 		render_world(origin, angles);
 		//printf("render_world-\n");
+
+		sys.renderMode.set_mode(bsp_mode);
 		for (int i = 0; i < m_numvisedicts; i++) {
 			entity_t *ent = m_visedicts[i];
 			if (ent->model == 0) {
 				host.printf("error: null entity model\n");
 				continue;
 			}
-			if (ent->model->type() == mod_alias) {
+			if (ent->model->type() != mod_brush) {
 				continue;
 			}
 			gsPushMatrix();
@@ -643,7 +645,6 @@ void ViewState::render(float *origin, float *angles) {
 		}
 
 		sys.renderMode.set_mode(mdl_mode);
-
 		for (int i = 0; i < m_numvisedicts; i++) {
 			entity_t *ent = m_visedicts[i];
 			if (ent->model == 0) {
@@ -657,7 +658,22 @@ void ViewState::render(float *origin, float *angles) {
 			render(ent);
 			gsPopMatrix();
 		}
-	gsPopMatrix();
+		
+		sys.renderMode.set_mode(shader_mode);
+		for (int i = 0; i < m_numvisedicts; i++) {
+			entity_t *ent = m_visedicts[i];
+			if (ent->model == 0) {
+				host.printf("error: null entity model\n");
+				continue;
+		}
+			if (ent->model->type() != mod_sprite) {
+				continue;
+			}
+			gsPushMatrix();
+			render(ent);
+			gsPopMatrix();
+		}
+		gsPopMatrix();
 
 	//printf("  %d\n", m_framecount);
 #else
@@ -679,6 +695,8 @@ void ViewState::render_viewent() {
 
 	glDepthRange(0.0, 1.0);
 #else
+	sys.renderMode.set_mode(mdl_mode);
+
 	gsPushMatrix();
 	//GPU_DepthRange(-0.3f, 0.0f);
 	gsTranslate(m_viewent->origin[0], m_viewent->origin[1], m_viewent->origin[2]);
@@ -917,7 +935,7 @@ void ViewState::render_bsp(entity_t *ent) {
 #endif
 	//texturing stuff
 
-	sys.renderMode.set_mode(bsp_mode);
+	//sys.renderMode.set_mode(bsp_mode);
 
 	gsTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
 	gsRotateZ(ent->angles[1] * M_PI / 180.0f);
@@ -930,7 +948,7 @@ void ViewState::render_bsp(entity_t *ent) {
 		render_face(face,ent->frame);
 	}
 
-	sys.renderMode.set_mode(shader_mode);
+	//sys.renderMode.set_mode(shader_mode);
 
 	//update lightmap textures
 	load_dirty_lightmaps(bsp);

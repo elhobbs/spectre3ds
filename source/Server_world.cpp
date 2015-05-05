@@ -276,8 +276,8 @@ int BoxOnPlaneSide(vec3_t femins, vec3_t femaxs, q1_plane *p)
 		break;
 	}
 
-	dist1 >>= 37;
-	dist2 >>= 37;
+	dist1 >>= 24;
+	dist2 >>= 24;
 
 	sides = 0;
 	if (dist1 >= p->m_dist.x)
