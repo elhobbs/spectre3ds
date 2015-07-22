@@ -82,7 +82,7 @@ void SYS::bind_texture(int id, int unit) {
 		tunit = GPU_TEXUNIT0;
 		break;
 	}
-	GPU_SetTexture(tunit, (u32*)osConvertVirtToPhys((u32)data), h, w, GPU_TEXTURE_MAG_FILTER(ptr->min) | GPU_TEXTURE_MIN_FILTER(ptr->mag) | GPU_TEXTURE_WRAP_S(GPU_REPEAT) | GPU_TEXTURE_WRAP_T(GPU_REPEAT), type);
+	GPU_SetTexture(tunit, (u32*)osConvertVirtToPhys((u32)data), w, h, GPU_TEXTURE_MAG_FILTER(ptr->min) | GPU_TEXTURE_MIN_FILTER(ptr->mag) | GPU_TEXTURE_WRAP_S(GPU_REPEAT) | GPU_TEXTURE_WRAP_T(GPU_REPEAT), type);
 }
 
 int SYS::texture_size(int id) {

@@ -191,9 +191,14 @@ int SYS::init() {
 	gfxInitDefault();
 	consoleInit(GFX_BOTTOM, 0);
 	gfxSwapBuffers();
-	
-	Result result = khaxInit();
-	::printf("khaxInit returned %08lx\n", result);
+
+	//only do this on ninjhax 1
+	if (!hbInit()) {
+
+		hbExit();
+		Result result = khaxInit();
+		::printf("khaxInit returned %08lx\n", result);
+	}
 
 	//aptOpenSession();
 	//result = APT_SetAppCpuTimeLimit(NULL, 80);
