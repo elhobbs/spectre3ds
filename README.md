@@ -1,7 +1,7 @@
 # spectre3ds
 modified quake source code - 3ds port
 
-    for ninjhax sd
+    for ninjhax/ironhax sd
     /3ds/spectre3ds/spectre3ds.3dsx
     /3ds/spectre3ds/id1/pak0.pak
     /3ds/spectre3ds/id1/pak1.pak (for registered version)
