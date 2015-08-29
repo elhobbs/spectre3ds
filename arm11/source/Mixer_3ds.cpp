@@ -178,7 +178,8 @@ byte* MixerHardware3DS::buffer() {
 }
 
 #define TICKS_PER_SEC 268123480.0
-#define TICKS_PER_SEC_LL 268123480LL
+//#define TICKS_PER_SEC_LL 268123480LL
+#define TICKS_PER_SEC_LL 268111856LL
 
 // Work around the VFP not supporting 64-bit integer <--> floating point conversion
 static inline double u64_to_double(u64 value) {
@@ -187,22 +188,6 @@ static inline double u64_to_double(u64 value) {
 
 u64 MixerHardware3DS::samplepos() {
 	u64 delta = (svcGetSystemTick() - m_start);
-	
-#if 0
-	CSND_ChnInfo info;
-	Result ret = csndGetState(m_channel, &info);
-	int pos = info.unknownZero - m_soundBufferPHY;
-	int diff = pos - m_lastPos;
-	if (diff < 0) {
-		diff += m_bufferSize;
-	}
-
-	m_soundPos2 += diff;
-	m_lastPos = pos;
-	m_lastPos2 = delta;
-	u64 speed = m_soundPos2 * TICKS_PER_SEC_LL / delta;
-#endif
-
 	u64 samples = delta * m_speed / TICKS_PER_SEC_LL;
 
 	m_soundPos = samples;
