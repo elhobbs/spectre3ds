@@ -275,18 +275,35 @@ int MapKey (int key, bool shift)
 	return result;
 }
 
+/*ACTION_NONE = 0,
+ACTION_FORWARD,
+ACTION_BACKWARD,
+ACTION_LEFT,
+ACTION_RIGHT,
+ACTION_JUMP,
+ACTION_ATTACK,
+ACTION_STRAFE_LEFT,
+ACTION_STRAFE_RIGHT,
+ACTION_UP,
+ACTION_DOWN,
+ACTION_SPEED,
+ACTION_MOVE_AWAY,
+ACTION_MOVE_NEAR,
+ACTION_MAX_NUM*/
+
 const action_t actions[] = {
+	{ "", ACTION_NONE },
 	{ "forward", ACTION_FORWARD },
 	{ "backward", ACTION_BACKWARD },
 	{ "left", ACTION_LEFT },
 	{ "right", ACTION_RIGHT },
-	{ "up", ACTION_UP },
-	{ "down", ACTION_DOWN },
 	{ "jump", ACTION_JUMP },
 	{ "attack", ACTION_ATTACK },
-	{ "speed", ACTION_SPEED },
 	{ "strafeleft", ACTION_STRAFE_LEFT },
 	{ "straferight", ACTION_STRAFE_RIGHT },
+	{ "up", ACTION_UP },
+	{ "down", ACTION_DOWN },
+	{ "speed", ACTION_SPEED },
 	{ "moveaway", ACTION_MOVE_AWAY },
 	{ "movenear", ACTION_MOVE_NEAR }
 };
@@ -372,4 +389,29 @@ int sEvHandler::bind(char *key,char *action) {
 	}
 
 	return -1;
+}
+
+void sEvHandler::save(FILE *f) {
+	if (f == 0) {
+		return;
+	}
+	int num = sizeof(keynames) / sizeof(keyname_t) - 1;
+	for (int i = 0; i<num; i++) {
+		int key = keynames[i].keynum;
+		int action = m_keys[key].action;
+		if (action) {
+			//printf("key %d %d %d %s %s\n", i, key, action, keynames[i].name, actions[action].name);
+			fprintf(f, "bind %s %s\n", keynames[i].name, actions[action].name);
+		}
+	}
+	num = sizeof(unnamedkeys);
+	ACTIONTYPE actionnum = ACTION_NONE;
+	for (int i = 0; i<num; i++) {
+		int key = unnamedkeys[i];
+		int action = m_keys[key].action;
+		if (action) {
+			//printf("key %d %d %d %s %s\n", i, key, action, keynames[i].name, actions[action].name);
+			fprintf(f, "bind %c %s\n", unnamedkeys[i], actions[action].name);
+		}
+	}
 }

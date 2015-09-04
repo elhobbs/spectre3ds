@@ -158,6 +158,8 @@ public:
 
 	void		bind_key(char *key, char *action);
 
+	void		save_keys(FILE *cfg);
+
 private:
 	entity_t		m_viewent;
 	int				m_framecount;

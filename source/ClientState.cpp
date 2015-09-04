@@ -91,6 +91,10 @@ void ClientState::bind_key(char *key, char *action) {
 	}
 }
 
+void ClientState::save_keys(FILE *cfg) {
+	m_evh.save(cfg);
+}
+
 void ClientState::disconnect() {
 
 	if (m_state == ca_connected) {

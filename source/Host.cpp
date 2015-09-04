@@ -289,6 +289,7 @@ void Host::shutdown_server() {
 }
 
 void Host::shutdown() {
+	save_config();
 	shutdown_server();
 	m_cl.shutdown();
 }
@@ -583,6 +584,8 @@ bool Host::init() {
 	pool.markLow();
 	linear.markLow();
 
+	load_config();
+
 	host.printf("host init complete\n");
 
 	pause_key("host init completed");
@@ -659,6 +662,52 @@ void Host::game_load(char *cmdline, void *p, ...) {
 		m_cl.reconnect();
 	}
 	::printf("done\n");
+}
+
+void Host::save_config() {
+	FILE *cfg = sys.fileSystem.create("spectre3ds.cfg");
+	if (cfg == 0) {
+		return;
+	}
+	printf("saving keys\n");
+	m_cl.save_keys(cfg);
+	printf("saving cvars\n");
+	Cvar_WriteVariables(cfg);
+	printf("done\n");
+
+
+	fclose(cfg);
+}
+
+void Host::load_config() {
+	sysFile *cfg = sys.fileSystem.open("spectre3ds.cfg");
+	if (cfg == 0) {
+		return;
+	}
+
+	int length = cfg->length();
+	char *cmd, *data;
+	cmd = data = new char[length + 1];
+	if (data) {
+		cfg->read(data, 0, length);
+		data[length] = 0;
+
+		while (cmd && *cmd) {
+			char *eol = cmd;
+			while (*eol && *eol != '\n') {
+				eol++;
+			}
+			if (*eol == '\n') {
+				*eol = 0;
+			}
+			execute(cmd);
+			cmd = ++eol;
+		}
+		delete [] data;
+	}
+	cfg->close();
+	delete cfg;
+
 }
 
 int Console::handleEvent(event_t ev) {

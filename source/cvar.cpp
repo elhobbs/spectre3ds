@@ -248,6 +248,6 @@ void Cvar_WriteVariables(FILE *f)
 
 	for (var = cvar_vars; var; var = var->next)
 	if (var->archive)
-		fprintf(f, "%s \"%s\"\n", var->name, var->string);
+		fprintf(f, "set %s %s\n", var->name, var->string);
 }
 

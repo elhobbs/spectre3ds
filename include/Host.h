@@ -61,6 +61,9 @@ private:
 	bool filter_time(double time);
 	void server_frame(float frametime);
 
+	void save_config();
+	void load_config();
+
 	double			m_time;
 	double			m_realtime;
 	double			m_oldrealtime;
@@ -299,7 +302,7 @@ inline void Host::set(char *cmdline, void *p, ...) {
 	char *temp = Cvar_VariableString(cmd.argv[1]);
 	strcpy(old_value, temp);
 	Cvar_Set(cmd.argv[1], cmd.argv[2]);
-	printf("%s changed from '%s' to '%s'\n", cmd.argv[1], old_value, Cvar_VariableString(cmd.argv[1]));
+	//printf("%s changed from '%s' to '%s'\n", cmd.argv[1], old_value, Cvar_VariableString(cmd.argv[1]));
 }
 
 inline void Host::clear(char *cmdline, void *p, ...) {

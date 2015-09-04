@@ -189,6 +189,7 @@ public:
 	int handleEvent(event_t ev);
 	bool actionState(ACTIONTYPE action);
 	int bind(char *key, char *action);
+	void save(FILE *f);
 private:
 	skey_t	m_keys[256];
 	int		m_actions[ACTION_MAX_NUM];
