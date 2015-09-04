@@ -35,11 +35,11 @@
 		mov o3, c20 (0x7)
 		mov o4, c20 (0x7)
 		; result.color = crappy lighting
-		dp3 r0, c8, v2 (0x4)
-		max r0, c20, r0 (0x9)
-		mul r0, c9, r0 (0x4)
-		add o1, c9, r0 (0x4)
-		mov o1, c20 (0x3)
+		;dp3 r0, c8, v2 (0x4)
+		;max r0, c20, r0 (0x9)
+		;mul r0, c9, r0 (0x4)
+		;add o1, c9, r0 (0x4)
+		mov o1, c9 (0x5)
 		nop
 		end
 	end_vmain:

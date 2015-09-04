@@ -281,6 +281,10 @@ void ClientState::render(frmType_t type) {
 	//extra update
 	m_mixer.update();
 	m_music.update();
+	
+	if (!host.console_visible()) {
+		render_hud();
+	}
 
 }
 
@@ -314,9 +318,9 @@ void ClientState::frame_start() {
 
 	//m_framecount++;
 
-	//if (m_paused) {
-	//	host.center_printf("paused");
-	//}
+	if (m_paused) {
+		host.center_printf("paused");
+	}
 }
 void ClientState::frame_end() {
 	m_view.m_dlights.dynamic(true);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sys.h"
+#include "gs.h"
 
 #define HUD_WIDTH 128
 #define HUD_HEIGHT 128
@@ -28,6 +29,7 @@ private:
 	float	m_time_quad;
 	float	m_time_invisibility;
 
+	gsVbo_s	m_vbo;
 	int		m_image_id;
 	byte	m_image[HUD_WIDTH * HUD_HEIGHT];
 };
@@ -36,6 +38,10 @@ inline Hud::Hud() {
 	reset();
 
 	m_image_id = -1;
+	m_vbo.data = (u8*)linearAlloc(sizeof(faceVertex_s)*6);
+	m_vbo.numVertices = 0;
+	m_vbo.currentSize = 0;
+	m_vbo.maxSize = sizeof(faceVertex_s) * 6;
 }
 
 inline void Hud::reset() {
