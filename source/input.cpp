@@ -1,5 +1,6 @@
 #include "sys.h"
 #include "input.h"
+#include "host.h"
 #include <3ds.h>
 
 typedef struct {
@@ -318,6 +319,7 @@ int sEvHandler::handleEvent(event_t ev) {
 	int key;
 
 	ACTIONTYPE action;
+	char *cmd = 0;
 	switch(ev.type) {
 	case EV_MOUSE_BUTTON:
 		for (int i = 0; i < 8; i++) {
@@ -336,6 +338,11 @@ int sEvHandler::handleEvent(event_t ev) {
 		key = MapKey(ev.value,false);
 		action = m_keys[key].action;
 		if(action == ACTION_NONE) {
+			cmd = m_keys[key].cmd;
+			if (cmd && down) {
+				host.execute(cmd);
+				return 1;
+			}
 			return 0;
 		}
 		m_actions[action] = down ? 1 : 0;
@@ -383,8 +390,19 @@ int sEvHandler::bind(char *key,char *action) {
 		}
 	}
 
-	if(keynum && actionnum) {
-		m_keys[keynum].action = actionnum;
+	if(keynum) {
+		if (m_keys[keynum].cmd) {
+			delete m_keys[keynum].cmd;
+			m_keys[keynum].cmd = 0;
+		}
+		if (actionnum) {
+			m_keys[keynum].action = actionnum;
+			return 0;
+		}
+		int cb = strlen(action) + 1;
+		m_keys[keynum].cmd = new char[cb];
+		strcpy(m_keys[keynum].cmd, action);
+		m_keys[keynum].action;
 		return 0;
 	}
 
@@ -399,19 +417,26 @@ void sEvHandler::save(FILE *f) {
 	for (int i = 0; i<num; i++) {
 		int key = keynames[i].keynum;
 		int action = m_keys[key].action;
+		char *cmd = m_keys[key].cmd;
 		if (action) {
 			//printf("key %d %d %d %s %s\n", i, key, action, keynames[i].name, actions[action].name);
 			fprintf(f, "bind %s %s\n", keynames[i].name, actions[action].name);
 		}
+		else if (cmd) {
+			fprintf(f, "bind %s \"%s\"\n", keynames[i].name, cmd);
+		}
 	}
 	num = sizeof(unnamedkeys);
-	ACTIONTYPE actionnum = ACTION_NONE;
 	for (int i = 0; i<num; i++) {
 		int key = unnamedkeys[i];
 		int action = m_keys[key].action;
+		char *cmd = m_keys[key].cmd;
 		if (action) {
 			//printf("key %d %d %d %s %s\n", i, key, action, keynames[i].name, actions[action].name);
 			fprintf(f, "bind %c %s\n", unnamedkeys[i], actions[action].name);
+		}
+		else if (cmd) {
+			fprintf(f, "bind %c \"%s\"\n", unnamedkeys[i], cmd);
 		}
 	}
 }

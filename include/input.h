@@ -181,6 +181,7 @@ typedef struct {
 typedef struct {
 	bool		down;
 	ACTIONTYPE	action;
+	char		*cmd;
 } skey_t;
 
 class sEvHandler: public EvHandler {

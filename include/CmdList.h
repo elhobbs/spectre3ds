@@ -99,6 +99,7 @@ private:
 };
 
 inline cmdArgs::cmdArgs(char *cmd) {
+	bool in_str = false;
 	argc = 0;
 	memset(argv, 0, sizeof(argv));
 	strcpy(str, cmd);
@@ -112,13 +113,19 @@ inline cmdArgs::cmdArgs(char *cmd) {
 		if (*b == 0 || *b == '\n' || *b == '\r') {
 			break;
 		}
-		argv[argc++] = b;
+		argv[argc] = b;
+		if (*b == '"') {
+			argv[argc] = ++b;
+			in_str = true;
+		}
 		while (*b) {
-			if (*b == ' ' || *b == '\n' || *b == '\r') {
+			if ((*b == '"' && in_str) || (*b == ' ' && !in_str) || *b == '\n' || *b == '\r') {
 				*b++ = 0;
+				in_str = false;
 				break;
 			}
 			b++;
 		}
+		argc++;
 	}
 }

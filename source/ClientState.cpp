@@ -55,6 +55,14 @@ ClientState::ClientState() {
 	m_evh.bind("b", "jump");
 	m_evh.bind("l", "attack");
 	m_evh.bind("r", "speed");
+	m_evh.bind("1", "impulse 1");
+	m_evh.bind("2", "impulse 2");
+	m_evh.bind("3", "impulse 3");
+	m_evh.bind("4", "impulse 4");
+	m_evh.bind("5", "impulse 5");
+	m_evh.bind("6", "impulse 6");
+	m_evh.bind("7", "impulse 7");
+	m_evh.bind("8", "impulse 8");
 
 	Cvar_RegisterVariable(&cl_upspeed);
 	Cvar_RegisterVariable(&cl_forwardspeed);
