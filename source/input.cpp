@@ -10,7 +10,7 @@ typedef struct {
 } keyname_t;
 
 // keys that can be set without a special name
-static const char unnamedkeys[] = "*,-=./[\\]1234567890abcdefghijklmnopqrstuvwxyz";
+static const char unnamedkeys[] = "*,-=./[\\]1234567890abcdefghijklmnopqrstuvwxyz<>";
 
 // names not in this list can either be lowercase ascii, or '0xnn' hex sequences
 keyname_t keynames[] =
