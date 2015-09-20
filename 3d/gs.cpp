@@ -218,6 +218,12 @@ void gsProjectionMatrix(float fovy, float aspect, float near, float far)
 	gsMatrixStackUpdated[gsCurrentMatrixType] = true;
 }
 
+void gsFrustum(float left, float right, float bottom, float top, float near, float far)
+{
+	initFrustumMatrix(gsGetMatrix(gsCurrentMatrixType), left, right, bottom, top, near, far);
+	gsMatrixStackUpdated[gsCurrentMatrixType] = true;
+}
+
 void gsOrthoMatrix(float width, float height, float near, float far)
 {
 	initOrthoMatrix(gsGetMatrix(gsCurrentMatrixType), width, height, near, far);

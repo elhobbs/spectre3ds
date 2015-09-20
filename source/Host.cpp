@@ -25,6 +25,12 @@ cvar_t	hud_alpha = { "hud_alpha", "0.3", true };
 cvar_t	mixahead = { "mixahead", "0.1", false };
 cvar_t	dynamic_textures = { "dynamic_textures", "1", false };
 
+cvar_t	_3ds_seperation = { "seperation", "20", true };
+cvar_t	_3ds_convergence = { "convergence", "500", true };
+cvar_t	_3ds_fov = { "fov", "90", true };
+cvar_t	_3ds_near_plane = { "near_plane", "4", true };
+cvar_t	_3ds_far_plane = { "far_plane", "8192", true };
+
 void Host::clear() {
 	m_notify.clear();
 	pool.clear();

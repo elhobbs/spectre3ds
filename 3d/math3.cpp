@@ -131,6 +131,43 @@ void initProjectionMatrix(float* m, float fovy, float aspect, float near, float 
 	multMatrix44(mp2, mp, m);
 }
 
+void initFrustumMatrix(float* m, float left, float right, float bottom, float top, float near, float far)
+{
+	float A = (right + left) / (right - left);
+	float B = (top + bottom) / (top - bottom);
+	float C = -(far + near) / (far - near);
+	float D =  (-2.0f * far * near) / (far - near);
+
+	float mp[4 * 4];
+
+	mp[0x0] = (2 * near) / (right - left);
+	mp[0x1] = 0.0f;
+	mp[0x2] = A;
+	mp[0x3] = 0.0f;
+
+	mp[0x4] = 0.0f;
+	mp[0x5] = (2.0f * near) / (top - bottom);
+	mp[0x6] = B;
+	mp[0x7] = 0.0f;
+
+	mp[0x8] = 0.0f;
+	mp[0x9] = 0.0f;
+	mp[0xA] = C;
+	mp[0xB] = D;
+
+	mp[0xC] = 0.0f;
+	mp[0xD] = 0.0f;
+	mp[0xE] = -1.0f;
+	mp[0xF] = 0.0f;
+
+	float mp2[4 * 4];
+	loadIdentity44(mp2);
+	mp2[0xA] = 0.5;
+	mp2[0xB] = -0.5;
+
+	multMatrix44(mp2, mp, m);
+}
+
 void initOrthoMatrix(float* m, float width, float height, float near, float far)
 {
 	mtx44 projection;

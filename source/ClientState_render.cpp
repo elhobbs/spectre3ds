@@ -252,11 +252,11 @@ void ClientState::render(frmType_t type) {
 		float ofs = 0;
 		switch (type) {
 		case FRAME_LEFT:
-			ofs = slider*-5.0f;
+			ofs = slider*-_3ds_seperation.value/2.0f;
 			vofs = slider * -0.3;
 			break;
 		case FRAME_RIGHT:
-			ofs = slider*5.0f;
+			ofs = slider*_3ds_seperation.value/2.0f;
 			vofs = slider * 0.3;
 			break;
 		}
@@ -264,8 +264,9 @@ void ClientState::render(frmType_t type) {
 	}
 
 	vieworg[0] = 0;
-	vieworg[1] = vofs;
+	vieworg[1] = 0;
 	vieworg[2] = 0;
+	//VectorMA(vieworg, vofs, v_up, vieworg);
 
 	update_view_model(vieworg, ang);
 	m_view.set_viewent(&m_viewent);
@@ -309,14 +310,6 @@ void ClientState::frame_start() {
 	if (cl) {
 		m_mixer.update(cl->origin, v_forward, v_right, v_up);
 	}
-
-
-
-	//if (!host.console_visible()) {
-	//	render_hud();
-	//}
-
-	//m_framecount++;
 
 	if (m_paused) {
 		host.center_printf("paused");

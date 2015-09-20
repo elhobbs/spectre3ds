@@ -41,6 +41,7 @@ int gsPopMatrix();
 int gsMatrixMode(GS_MATRIX m);
 
 void gsLoadIdentity();
+void gsFrustum(float left, float right, float bottom, float top, float near, float far);
 void gsProjectionMatrix(float fovy, float aspect, float near, float far);
 void gsOrthoMatrix(float width, float height, float near, float far);
 void gsRotateX(float x);

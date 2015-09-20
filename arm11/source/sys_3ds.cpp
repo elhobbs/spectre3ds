@@ -296,9 +296,170 @@ void GPU_SetDummyTexEnv(u8 num)
 		GPU_REPLACE,
 		0xFFFFFFFF);
 }
+#if 1
+void ApplyLeftFrustum(float mNearClippingDistance, float mFarClippingDistance, float mFOV, float mAspectRatio, float mConvergence, float mEyeSeparation)
+{
+	float top, bottom, left, right;
+
+#if 1
+	float tanfov = tan(mFOV / 2);
+	float fshift = (mEyeSeparation / 2.0) * mNearClippingDistance / mConvergence;
+
+	bottom = -mNearClippingDistance*tanfov + fshift;
+	top = mNearClippingDistance*tanfov + fshift;
+
+	right = mAspectRatio * mNearClippingDistance * tanfov;
+	left = -right;
+#else
+	top = mNearClippingDistance * tan(mFOV / 2);
+	bottom = -top;
+
+	float a = mAspectRatio * tan(mFOV / 2) * mConvergence;
+
+	float b = a - mEyeSeparation / 2;
+	float c = a + mEyeSeparation / 2;
+
+	left = -b * mNearClippingDistance / mConvergence;
+	right = c * mNearClippingDistance / mConvergence;
+#endif
+
+	// Set the Projection Matrix
+	gsMatrixMode(GS_PROJECTION);
+	gsLoadIdentity();
+	gsFrustum(left, right, bottom, top,
+		mNearClippingDistance, mFarClippingDistance);
+
+	// Displace the world to right
+	//gsMatrixMode(GS_MODELVIEW);
+	//gsLoadIdentity();
+	//glTranslatef(mEyeSeparation / 2, 0.0f, 0.0f);
+}
+
+void ApplyRightFrustum(float mNearClippingDistance, float mFarClippingDistance, float mFOV, float mAspectRatio, float mConvergence, float mEyeSeparation)
+{
+	float top, bottom, left, right;
+#if 1
+	float tanfov = tan(mFOV / 2);
+	float fshift = (mEyeSeparation / 2.0) * mNearClippingDistance / mConvergence;
+
+	bottom = -mNearClippingDistance*tanfov - fshift;
+	top = mNearClippingDistance*tanfov - fshift;
+	
+	right = mAspectRatio * mNearClippingDistance * tanfov;
+	left = -right;
+#else
+	top = mNearClippingDistance * tan(mFOV / 2);
+	bottom = -top;
+
+	float a = mAspectRatio * tan(mFOV / 2) * mConvergence;
+
+	float b = a - mEyeSeparation / 2;
+	float c = a + mEyeSeparation / 2;
+
+	left = -c * mNearClippingDistance / mConvergence;
+	right = b * mNearClippingDistance / mConvergence;
+#endif
+
+	// Set the Projection Matrix
+	gsMatrixMode(GS_PROJECTION);
+	gsLoadIdentity();
+	gsFrustum(left, right, bottom, top,
+		mNearClippingDistance, mFarClippingDistance);
+
+	// Displace the world to left
+	//glMatrixMode(GS_MODELVIEW);
+	//gsLoadIdentity();
+	//glTranslatef(-mEyeSeparation / 2, 0.0f, 0.0f);
+}
+
+#else
+void ApplyLeftFrustum(float mNearClippingDistance, float mFarClippingDistance, float mFOV, float mAspectRatio, float mConvergence, float mEyeSeparation)
+{
+	float top, bottom, left, right;
+
+#if 1
+	float tanfov = tan(mFOV / 2);
+	float a = tanfov * mConvergence;
+
+	float b = a - mEyeSeparation / 2;
+	float c = a + mEyeSeparation / 2;
+
+	bottom = -b * mNearClippingDistance / mConvergence;
+	top = c * mNearClippingDistance / mConvergence;
+
+	right = mAspectRatio * mNearClippingDistance * tanfov;
+	left = -right;
+#else
+	top = mNearClippingDistance * tan(mFOV / 2);
+	bottom = -top;
+
+	float a = mAspectRatio * tan(mFOV / 2) * mConvergence;
+
+	float b = a - mEyeSeparation / 2;
+	float c = a + mEyeSeparation / 2;
+
+	left = -b * mNearClippingDistance / mConvergence;
+	right = c * mNearClippingDistance / mConvergence;
+#endif
+
+	// Set the Projection Matrix
+	gsMatrixMode(GS_PROJECTION);
+	gsLoadIdentity();
+	gsFrustum(left, right, bottom, top,
+		mNearClippingDistance, mFarClippingDistance);
+
+	// Displace the world to right
+	//gsMatrixMode(GS_MODELVIEW);
+	//gsLoadIdentity();
+	//glTranslatef(mEyeSeparation / 2, 0.0f, 0.0f);
+}
+
+void ApplyRightFrustum(float mNearClippingDistance, float mFarClippingDistance, float mFOV, float mAspectRatio, float mConvergence, float mEyeSeparation)
+{
+	float top, bottom, left, right;
+#if 1
+	float tanfov = tan(mFOV / 2);
+	float a = tanfov * mConvergence;
+
+	float b = a - mEyeSeparation / 2;
+	float c = a + mEyeSeparation / 2;
+
+	bottom = -c * mNearClippingDistance / mConvergence;
+	top = b * mNearClippingDistance / mConvergence;
+	
+	right = mAspectRatio * mNearClippingDistance * tanfov;
+	left = -right;
+#else
+	top = mNearClippingDistance * tan(mFOV / 2);
+	bottom = -top;
+
+	float a = mAspectRatio * tan(mFOV / 2) * mConvergence;
+
+	float b = a - mEyeSeparation / 2;
+	float c = a + mEyeSeparation / 2;
+
+	left = -c * mNearClippingDistance / mConvergence;
+	right = b * mNearClippingDistance / mConvergence;
+#endif
+
+	// Set the Projection Matrix
+	gsMatrixMode(GS_PROJECTION);
+	gsLoadIdentity();
+	gsFrustum(left, right, bottom, top,
+		mNearClippingDistance, mFarClippingDistance);
+
+	// Displace the world to left
+	//glMatrixMode(GS_MODELVIEW);
+	//gsLoadIdentity();
+	//glTranslatef(-mEyeSeparation / 2, 0.0f, 0.0f);
+}
+#endif
 
 bool sys_in_frame = false;
+#define CONFIG_3D_SLIDERSTATE (*(float*)0x1FF81080)
 int SYS::frame_begin(frmType_t type) {
+	float slider = CONFIG_3D_SLIDERSTATE;
+
 	sys_in_frame = true;
 	
 	switch(type) {
@@ -375,8 +536,28 @@ int SYS::frame_begin(frmType_t type) {
 
 
 	//initialize projection matrix to standard perspective stuff
-	gsMatrixMode(GS_PROJECTION);
-	gsProjectionMatrix(80.0f*M_PI / 180.0f, 240.0f / 400.0f, 4.0f, 8192.0f);
+	//gsMatrixMode(GS_PROJECTION);
+	//gsProjectionMatrix(80.0f*M_PI / 180.0f, 240.0f / 400.0f, 4.0f, 8192.0f);
+	do {
+		float convergence = _3ds_convergence.value;
+		float seperation = _3ds_seperation.value * slider;
+		float fov = _3ds_fov.value * M_PI / 180.0f;
+		float near_plane = _3ds_near_plane.value;
+		float far_plane = _3ds_far_plane.value;
+		float aspect = 240.0f / 400.0f;
+
+		if (convergence == 0.0f) {
+			convergence = 1.0f;
+		}
+		switch (type) {
+		case FRAME_LEFT:
+			ApplyLeftFrustum(near_plane, far_plane, fov, aspect, convergence, seperation);
+			break;
+		case FRAME_RIGHT:
+			ApplyRightFrustum(near_plane, far_plane, fov, aspect, convergence, seperation);
+			break;
+		}
+	} while (0);
 	gsRotateZ(M_PI / 2); //because framebuffer is sideways...
 
 	gsVboClear(&con_tris);

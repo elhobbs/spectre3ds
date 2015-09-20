@@ -134,6 +134,7 @@ void rotateMatrixY(float* tm, float x, bool r);
 void rotateMatrixZ(float* tm, float x, bool r);
 void scaleMatrix(float* tm, float x, float y, float z);
 
+void initFrustumMatrix(float* m, float left, float right, float bottom, float top, float near, float far);
 void initProjectionMatrix(float* m, float fovy, float aspect, float near, float far);
 void initOrthoMatrix(float* m, float width, float height, float near, float far);
 

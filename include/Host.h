@@ -18,6 +18,11 @@ extern cvar_t	v_gamma;
 extern cvar_t	hud_alpha;
 extern cvar_t	mixahead;
 extern cvar_t	dynamic_textures;
+extern cvar_t	_3ds_seperation;
+extern cvar_t	_3ds_convergence;
+extern cvar_t	_3ds_fov;
+extern cvar_t	_3ds_near_plane;
+extern cvar_t	_3ds_far_plane;
 
 class Host {
 public:
@@ -116,6 +121,11 @@ inline Host::Host():m_cmds(this) {
 	Cvar_RegisterVariable(&hud_alpha);
 	Cvar_RegisterVariable(&mixahead);
 	Cvar_RegisterVariable(&dynamic_textures);
+	Cvar_RegisterVariable(&_3ds_seperation);
+	Cvar_RegisterVariable(&_3ds_convergence);
+	Cvar_RegisterVariable(&_3ds_fov);
+	Cvar_RegisterVariable(&_3ds_near_plane);
+	Cvar_RegisterVariable(&_3ds_far_plane);
 
 	m_cmds.add("changelevel", &Host::change_level);
 	m_cmds.add("restart", &Host::restart);

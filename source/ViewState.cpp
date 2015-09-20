@@ -543,6 +543,7 @@ float CalcFov(float fov_x, float width, float height);
 void ViewState::render(float *origin, float *angles) {
 
 	vec3_t forward, right, up;
+	float fov = _3ds_fov.value;
 
 	gsVboClear(&m_vbo);
 	m_camera = origin;
@@ -551,7 +552,7 @@ void ViewState::render(float *origin, float *angles) {
 	m_right = right;
 	m_up = up;
 
-	m_frustum.transform(origin, forward, right, up, 80.0f, CalcFov(80.0f,400.0f,240.0f));
+	m_frustum.transform(origin, forward, right, up, fov, CalcFov(fov,400.0f,240.0f));
 
 	m_draw_sky = false;
 
@@ -710,7 +711,7 @@ void ViewState::render_viewent() {
 	//GPU_DepthMap(-1.0f, -0.1f);
 	//render(m_viewent);
 	//GPU_SetDepthTestAndWriteMask(true, GPU_GEQUAL, GPU_WRITE_ALL);
-	GPU_DepthMap(-0.5f, 0.5f);
+	GPU_DepthMap(-1.0f, 0.5f);
 	render(m_viewent);
 	GPU_DepthMap(-1.0f, 0.0f);
 	//GPU_SetDepthTestAndWriteMask(true, GPU_GREATER, GPU_WRITE_ALL);
