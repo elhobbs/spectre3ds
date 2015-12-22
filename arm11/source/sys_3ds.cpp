@@ -15,7 +15,7 @@ cache textureCache;
 cache vboCache;
 
 extern gsVbo_s con_tris;
-extern u32* __linear_heap;
+extern u32* __ctru_linear_heap;
 
 #define TICKS_PER_MSEC 268123.480
 #define TICKS_PER_SEC 268123480.0
@@ -30,9 +30,9 @@ static volatile u32* __datetime_selector = (u32*)0x1FF81000;
 static volatile datetime2_t* __datetime0 = (datetime2_t*)0x1FF81020;
 static volatile datetime2_t* __datetime1 = (datetime2_t*)0x1FF81040;
 
-extern Handle gspEvents[GSPEVENT_MAX];
-void __gspWaitForEvent(GSP_Event id, bool nextEvent) {
-	if (id >= GSPEVENT_MAX)return;
+extern Handle gspEvents[GSPGPU_EVENT_MAX];
+void __gspWaitForEvent(GSPGPU_Event id, bool nextEvent) {
+	if (id >= GSPGPU_EVENT_MAX)return;
 	if (nextEvent)
 		svcClearEvent(gspEvents[id]);
 	Result ret = svcWaitSynchronization(gspEvents[id], 200 * 1000 * 1000);
@@ -45,14 +45,14 @@ void __gspWaitForEvent(GSP_Event id, bool nextEvent) {
 	}
 }
 
-#define __gspWaitForPSC0() __gspWaitForEvent(GSPEVENT_PSC0, false)
-#define __gspWaitForPSC1() __gspWaitForEvent(GSPEVENT_PSC1, false)
-#define __gspWaitForVBlank() __gspWaitForEvent(GSPEVENT_VBlank0, true)
-#define __gspWaitForVBlank0() __gspWaitForEvent(GSPEVENT_VBlank0, true)
-#define __gspWaitForVBlank1() __gspWaitForEvent(GSPEVENT_VBlank1, true)
-#define __gspWaitForPPF() __gspWaitForEvent(GSPEVENT_PPF, false)
-#define __gspWaitForP3D() __gspWaitForEvent(GSPEVENT_P3D, false)
-#define __gspWaitForDMA() __gspWaitForEvent(GSPEVENT_DMA, false)
+#define __gspWaitForPSC0() __gspWaitForEvent(GSPGPU_EVENT_PSC0, false)
+#define __gspWaitForPSC1() __gspWaitForEvent(GSPGPU_EVENT_PSC1, false)
+#define __gspWaitForVBlank() __gspWaitForEvent(GSPGPU_EVENT_VBlank0, true)
+#define __gspWaitForVBlank0() __gspWaitForEvent(GSPGPU_EVENT_VBlank0, true)
+#define __gspWaitForVBlank1() __gspWaitForEvent(GSPGPU_EVENT_VBlank1, true)
+#define __gspWaitForPPF() __gspWaitForEvent(GSPGPU_EVENT_PPF, false)
+#define __gspWaitForP3D() __gspWaitForEvent(GSPGPU_EVENT_P3D, false)
+#define __gspWaitForDMA() __gspWaitForEvent(GSPGPU_EVENT_DMA, false)
 
 
 // Returns number of milliseconds since 1st Jan 1900 00:00.
@@ -154,7 +154,7 @@ void set_shader_shader() {
 	u32 bufferOffsets = 0;
 	u64 bufferPermutations = 0x210;;
 	u8 bufferNumAttributes = 2;
-	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((u32)__linear_heap),
+	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((void *)__ctru_linear_heap),
 		GPU_ATTRIBFMT(0, 3, GPU_FLOAT) | GPU_ATTRIBFMT(1, 2, GPU_FLOAT),
 		0xFFC, 0x210, 1, &bufferOffsets, &bufferPermutations, &bufferNumAttributes);
 	GPU_SetTextureEnable(GPU_TEXUNIT0);
@@ -172,7 +172,7 @@ void set_text_shader() {
 	u32 bufferOffsets = 0;
 	u64 bufferPermutations = 0x210;;
 	u8 bufferNumAttributes = 2;
-	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((u32)__linear_heap),
+	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((void *)__ctru_linear_heap),
 		GPU_ATTRIBFMT(0, 3, GPU_FLOAT) | GPU_ATTRIBFMT(1, 2, GPU_FLOAT),
 		0xFFC, 0x210, 1, &bufferOffsets, &bufferPermutations, &bufferNumAttributes);
 	GPU_SetTextureEnable(GPU_TEXUNIT0);
@@ -186,7 +186,7 @@ void set_text_shader() {
 }
 
 int SYS::init() {
-	Result ret = 0;
+	Result r, ret = 0;
 
 	gfxInitDefault();
 	consoleInit(GFX_BOTTOM, 0);
@@ -200,12 +200,17 @@ int SYS::init() {
 		::printf("khaxInit returned %08lx\n", result);
 	}
 
-	//aptOpenSession();
-	//result = APT_SetAppCpuTimeLimit(NULL, 80);
-	//aptCloseSession();
-	//::printf("%08X\n", (unsigned int)result);
-
-	svcSleepThread(2000000000);
+	u8 isN3DS = 0;
+	APT_CheckNew3DS(&isN3DS);
+	if (isN3DS){
+		osSetSpeedupEnable(true);
+		aptOpenSession();
+		r = APT_SetAppCpuTimeLimit(80);
+		if (r != 0){
+			::printf("APT_SetAppCpuTimeLimit: Error\n");
+		}
+		aptCloseSession();
+	}
 	
 	GPU_Init(NULL);
 
@@ -262,11 +267,6 @@ int SYS::init() {
 	timer_init();
 
 	srand(svcGetSystemTick());
-
-	//aptOpenSession();
-	// Result ret=APT_SetAppCpuTimeLimit(NULL, 30);
-	//ret = APT_SetAppCpuTimeLimit(NULL, 80);
-	//aptCloseSession();
 
 	window_create();
 
@@ -475,8 +475,8 @@ int SYS::frame_begin(frmType_t type) {
 #endif
 	gsStartFrame();
 	GPU_SetViewport(
-		(u32*)osConvertVirtToPhys((u32)gsGpuDOut), 
-		(u32*)osConvertVirtToPhys((u32)gsGpuOut), 
+		(u32*)osConvertVirtToPhys((void *)gsGpuDOut), 
+		(u32*)osConvertVirtToPhys((void *)gsGpuOut), 
 		0, 0, 240 * 2, 400);
 
 	GPU_DepthMap(-1.0f, 0.0f);
@@ -581,22 +581,22 @@ int SYS::frame_end(frmType_t type) {
 
 	GPUCMD_Finalize();
 
-	GPUCMD_FlushAndRun(NULL);
+	GPUCMD_FlushAndRun();
 	__gspWaitForP3D();
 	
 	switch (type) {
 	case FRAME_LEFT:
-		GX_SetDisplayTransfer(NULL, (u32*)gsGpuOut, 0x019001E0, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), 0x019001E0, 0x01001000);
+		GX_DisplayTransfer((u32*)gsGpuOut, 0x019001E0, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), 0x019001E0, 0x01001000);
 		break;
 	case FRAME_RIGHT:
-		GX_SetDisplayTransfer(NULL, (u32*)gsGpuOut, 0x019001E0, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL), 0x019001E0, 0x01001000);
+		GX_DisplayTransfer((u32*)gsGpuOut, 0x019001E0, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_RIGHT, NULL, NULL), 0x019001E0, 0x01001000);
 		break;
 	}
 	__gspWaitForPPF();
 	
 	//__gspWaitForPSC0();
 	//clear the screen
-	GX_SetMemoryFill(NULL, (u32*)gsGpuOut, gsBackgroundColor, (u32*)&gsGpuOut[0x2EE00], 0x201, (u32*)gsGpuDOut, 0x00000000, (u32*)&gsGpuDOut[0x2EE00], 0x201);
+	GX_MemoryFill((u32*)gsGpuOut, gsBackgroundColor, (u32*)&gsGpuOut[0x2EE00], 0x201, (u32*)gsGpuDOut, 0x00000000, (u32*)&gsGpuDOut[0x2EE00], 0x201);
 	__gspWaitForPSC0();
 
 #endif
@@ -610,6 +610,9 @@ int SYS::frame_final() {
 	gfxSwapBuffersGpu();
 
 	//gspWaitForEvent(GSPEVENT_VBlank0, true);
+	if (m_vsync) {
+		gspWaitForEvent(GSPGPU_EVENT_VBlank0, true);
+	}
 	sys_in_frame = false;
 	return 0;
 }

@@ -82,7 +82,7 @@ void SYS::bind_texture(int id, int unit) {
 		tunit = GPU_TEXUNIT0;
 		break;
 	}
-	GPU_SetTexture(tunit, (u32*)osConvertVirtToPhys((u32)data), w, h, GPU_TEXTURE_MAG_FILTER(ptr->min) | GPU_TEXTURE_MIN_FILTER(ptr->mag) | GPU_TEXTURE_WRAP_S(GPU_REPEAT) | GPU_TEXTURE_WRAP_T(GPU_REPEAT), type);
+	GPU_SetTexture(tunit, (u32*)osConvertVirtToPhys((u32 *)data), w, h, GPU_TEXTURE_MAG_FILTER(ptr->min) | GPU_TEXTURE_MIN_FILTER(ptr->mag) | GPU_TEXTURE_WRAP_S(GPU_REPEAT) | GPU_TEXTURE_WRAP_T(GPU_REPEAT), type);
 }
 
 int SYS::texture_size(int id) {
@@ -382,7 +382,7 @@ void _pal256toRGBA(tex3ds_t *tx, unsigned char *data, unsigned char *palette, in
 		delete [] src;
 	}
 	//printf("flushing\n");
-	GSPGPU_FlushDataCache(0, tx->data, cb);
+	GSPGPU_FlushDataCache(tx->data, cb);
 	//printf("done\n");
 }
 
@@ -407,7 +407,7 @@ void SYS::load_texture_L8(int id, int width, int height, unsigned char *data) {
 			tile += (8 * 8);
 		}
 	}
-	GSPGPU_FlushDataCache(0, tex->data, width * height);
+	GSPGPU_FlushDataCache(tex->data, width * height);
 }
 
 void SYS::load_texture256(int id, int width, int height, unsigned char *data, unsigned char *palette, int trans) {

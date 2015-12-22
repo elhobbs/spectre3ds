@@ -13,7 +13,6 @@
 #include <gl\glu.h>
 #endif
 
-extern u32* __linear_heap;
 extern shaderProgram_s shader;
 extern shaderProgram_s q1Bsp_shader;
 extern shaderProgram_s q1Mdl_shader;
@@ -21,6 +20,8 @@ extern int shader_mode;
 
 cvar_t	r_ambient = { "r_ambient", "0" };
 cvar_t	r_fullbright = { "r_fullbright", "0" };
+
+void skybox_build(float *org);
 
 int mdl_mode = -1;
 int bsp_mode = -1;
@@ -38,6 +39,8 @@ void ViewState::init() {
 	lightmap_data = 0;
 	mdl_mode = sys.renderMode.register_mode(&q1Mdl::set_render_mode);
 	bsp_mode = sys.renderMode.register_mode(&q1Bsp::set_render_mode);
+	float org[3] = { 0, 0, 0 };
+	skybox_build(org);
 }
 
 
@@ -519,7 +522,7 @@ void update_lm(q1_lightmap *lm) {
 			tile += (8 * 8);
 		}
 	}
-	GSPGPU_FlushDataCache(0, tex->data, width * height);
+	GSPGPU_FlushDataCache(tex->data, width * height);
 }
 
 void ViewState::load_dirty_lightmaps(q1Bsp *bsp) {
@@ -673,6 +676,10 @@ void ViewState::render(float *origin, float *angles) {
 			gsPushMatrix();
 			render(ent);
 			gsPopMatrix();
+		}
+		if (m_draw_sky) {
+			int sky = m_worldmodel->m_skytexture_id;
+			skybox_render(origin, sky);
 		}
 		gsPopMatrix();
 

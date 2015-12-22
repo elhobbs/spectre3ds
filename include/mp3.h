@@ -39,9 +39,9 @@ private:
 
 	void fill_buffer();
 
-	int sample_pos();
+	u64 sample_pos();
 	void frame();
-	void frames(int endtime);
+	void frames(u64 endtime);
 
 	void starting();
 	void playing();
@@ -52,8 +52,8 @@ private:
 	void pause();
 	void resume();
 
-	int			m_sound_time;
-	int			m_paint_time;
+	u64			m_sound_time;
+	u64			m_paint_time;
 	int			m_samples;
 	int			m_speed;
 	int			m_channels;
@@ -83,6 +83,6 @@ inline mp3::mp3() {
 	m_hw = 0;
 }
 
-inline int mp3::sample_pos() {
+inline u64 mp3::sample_pos() {
 	return m_hw ? m_hw->samplepos() : 0;
 }

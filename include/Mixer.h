@@ -53,6 +53,8 @@ public:
 	void reset();
 	void update();
 
+	void print();
+
 	void update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
 	void cache_ambient_sounds();
 	void stop_all();

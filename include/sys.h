@@ -181,6 +181,9 @@ private:
 
 	//flag to signal shutdown
 	bool		m_running;
+
+	//use vsync
+	bool		m_vsync;
 	
 	//font texture
 	unsigned int m_font_texture_id;
@@ -239,15 +242,14 @@ inline SYS::SYS(void) {
 	m_ev_handlers_max = 4;
 	m_ev_handlers = new EvHandler*[4];
 	m_running = true;
+	m_vsync = false;
 }
 
 inline void SYS::sleep(int ms) {
 #ifdef WIN32
 	Sleep(ms);
 #endif
-	u64 now = osGetTime() + ms;
-
-	while (now > osGetTime());
+	svcSleepThread(ms * 1000000LL);
 }
 
 inline unsigned int SYS::last_texture_id() {
@@ -259,6 +261,7 @@ inline void SYS::quit() {
 }
 
 inline void SYS::vsync(bool enable) {
+	m_vsync = enable;
 #ifdef WIN32
 	if (wglSwapIntervalEXT == 0) {
 		return;

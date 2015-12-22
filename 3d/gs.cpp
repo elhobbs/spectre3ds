@@ -417,7 +417,7 @@ void GPU_DrawArrayDirectly(GPU_Primitive_t primitive, u8* data, u32 n)
 	u32 one = 1;
 	u32 zero = 0;
 	u32 prim = primitive;
-	u32 addr = (osConvertVirtToPhys((u32)data) >> 3);
+	u32 addr = (osConvertVirtToPhys((void *)data) >> 3);
 	u32 ind = 0x80000000;
 	u32 num = n;
 	//set attribute buffer address

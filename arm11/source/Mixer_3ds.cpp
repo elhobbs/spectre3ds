@@ -25,7 +25,7 @@ void MixerHardware3DS::init() {
 	}
 
 	m_soundBuffer = (byte *)linearAlloc(m_bufferSize*m_num_channels);
-	m_soundBufferPHY = osConvertVirtToPhys((u32)m_soundBuffer);
+	m_soundBufferPHY = osConvertVirtToPhys((void *)m_soundBuffer);
 	m_bufferPos = 0;
 	m_soundPos = 0;
 	m_soundPos2 = 0;
@@ -55,8 +55,8 @@ Result play_sound(int chn, u32 flags, u32 sampleRate, float vol, float pan, void
 
 	if (!loopMode) flags |= SOUND_ONE_SHOT;
 
-	if (data0) paddr0 = osConvertVirtToPhys((u32)data0);
-	if (data1) paddr1 = osConvertVirtToPhys((u32)data1);
+	if (data0) paddr0 = osConvertVirtToPhys((void *)data0);
+	if (data1) paddr1 = osConvertVirtToPhys((void *)data1);
 
 	u32 timer = CSND_TIMER(sampleRate);
 	if (timer < 0x0042) timer = 0x0042;
@@ -144,7 +144,7 @@ void MixerHardware3DS::clear() {
 		return;
 	}
 	memset(m_soundBuffer, 0, m_bufferSize*m_num_channels);
-	GSPGPU_FlushDataCache(NULL, m_soundBuffer, m_bufferSize*m_num_channels);
+	GSPGPU_FlushDataCache(m_soundBuffer, m_bufferSize*m_num_channels);
 }
 
 void MixerHardware3DS::shutdown() {
@@ -159,8 +159,8 @@ void MixerHardware3DS::shutdown() {
 	}
 	audio_initialized--;
 	if (audio_initialized == 0) {
-		Result ret = csndExit();
-		printf("csndExit %d\n", ret);
+		csndExit();
+		printf("csndExit\n");
 		svcSleepThread(3000000000);
 	}
 }
@@ -170,7 +170,7 @@ void MixerHardware3DS::flush() {
 		return;
 	}
 	memset(m_soundBuffer, 0, m_bufferSize * m_num_channels);
-	GSPGPU_FlushDataCache(NULL, m_soundBuffer, m_bufferSize*m_num_channels);
+	GSPGPU_FlushDataCache(m_soundBuffer, m_bufferSize*m_num_channels);
 }
 
 byte* MixerHardware3DS::buffer() {
@@ -252,7 +252,7 @@ void MixerHardware3DS::update(int *pAudioData, int count) {
 			pos = (pos + 1) & mask;
 		}
 	}
-	GSPGPU_FlushDataCache(NULL, m_soundBuffer, m_bufferSize*m_num_channels);
+	GSPGPU_FlushDataCache(m_soundBuffer, m_bufferSize*m_num_channels);
 	//printf("upd int: %08x %8d\n", pAudioData, count);
 }
 
@@ -309,6 +309,6 @@ void MixerHardware3DS::update(short *pAudioData, int count)
 			pos = (pos + 1) & mask;
 		}
 	}
-	GSPGPU_FlushDataCache(NULL, m_soundBuffer, m_bufferSize * m_num_channels);
+	GSPGPU_FlushDataCache(m_soundBuffer, m_bufferSize * m_num_channels);
 	//printf("upd short: %08x %6d %6d\n", pAudioData, count, m_bufferPos);
 }

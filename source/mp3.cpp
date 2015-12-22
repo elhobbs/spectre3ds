@@ -6,6 +6,7 @@
 #endif
 #ifdef ARM11
 #include "Mixer_3ds.h"
+#include "Mixer_dsp.h"
 #endif
 
 void mp3::frame() {
@@ -56,7 +57,7 @@ void mp3::frame() {
 		m_hw = reinterpret_cast<MixerHardware *>(new MixerHardwareWin32(m_speed, m_channels));
 #endif
 #ifdef ARM11
-		MixerHardware3DS *p3ds = new MixerHardware3DS(10, m_speed, m_channels);
+		MixerHardwareDSP *p3ds = new MixerHardwareDSP(10, m_speed, m_channels);
 		p3ds->init();
 		m_hw = reinterpret_cast<MixerHardware *>(p3ds);
 #endif
@@ -73,7 +74,7 @@ void mp3::fill_buffer() {
 	}
 }
 
-void mp3::frames(int endtime)
+void mp3::frames(u64 endtime)
 {
 
 	while (m_paint_time < endtime && m_state != MP3_ERROR)
@@ -103,7 +104,7 @@ void mp3::playing() {
 	}
 
 	// mix ahead of current position
-	unsigned endtime = m_sound_time + (m_mp3FrameInfo.samprate / 10);
+	u64 endtime = m_sound_time + (m_mp3FrameInfo.samprate / 10);
 
 	frames(endtime);
 }
@@ -231,7 +232,7 @@ void mp3::stop() {
 	if (m_hw) {
 		m_hw->flush();
 #ifdef ARM11
-		MixerHardware3DS *p3ds = reinterpret_cast<MixerHardware3DS *>(m_hw);
+		MixerHardwareDSP *p3ds = reinterpret_cast<MixerHardwareDSP *>(m_hw);
 		p3ds->shutdown();
 #endif
 		delete m_hw;

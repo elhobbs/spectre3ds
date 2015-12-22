@@ -249,7 +249,7 @@ q1Mdl::q1Mdl(char *name, sysFile *file):Model(name) {
 	m_radius = 0;
 }
 
-extern u32* __linear_heap;
+extern u32* __ctru_linear_heap;
 extern shaderProgram_s q1Mdl_shader;
 
 void q1Mdl::set_render_mode() {
@@ -259,7 +259,7 @@ void q1Mdl::set_render_mode() {
 
 	gsShaderSet(&q1Mdl_shader);
 
-	GPU_SetAttributeBuffers(2, (u32*)osConvertVirtToPhys((u32)__linear_heap),
+	GPU_SetAttributeBuffers(2, (u32*)osConvertVirtToPhys((void *)__ctru_linear_heap),
 		GPU_ATTRIBFMT(0, 4, GPU_UNSIGNED_BYTE) | GPU_ATTRIBFMT(1, 2, GPU_FLOAT),
 		0xFFC, 0x210, 1, &bufferOffsets, &bufferPermutations, &bufferNumAttributes);
 	

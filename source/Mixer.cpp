@@ -4,7 +4,7 @@
 #include "Mixer_win32.h"
 #endif
 #ifdef ARM11
-#include "Mixer_3ds.h"
+#include "Mixer_dsp.h"
 #endif
 
 void Mixer::init() {
@@ -14,9 +14,9 @@ void Mixer::init() {
 #endif
 
 #ifdef ARM11
-	MixerHardware3DS *p3ds = new MixerHardware3DS(16,11025,2);
+	MixerHardwareDSP *p3ds = new MixerHardwareDSP(0,11025,2);
 	p3ds->init();
-	m_hw = reinterpret_cast<MixerHardware *>(p3ds);
+	m_hw = p3ds;
 #endif
 	reset();
 }
@@ -24,7 +24,7 @@ void Mixer::init() {
 void Mixer::shutdown() {
 	if (m_hw) {
 #ifdef ARM11
-		MixerHardware3DS *p3ds = reinterpret_cast<MixerHardware3DS *>(m_hw);
+		MixerHardwareDSP *p3ds = reinterpret_cast<MixerHardwareDSP *>(m_hw);
 		p3ds->shutdown();
 		delete p3ds;
 #endif
@@ -34,10 +34,7 @@ void Mixer::shutdown() {
 
 void Mixer::reset() {
 	stop_all();
-	m_sound_time = m_paint_time = 0;
-	for (int i = 0; i < NUM_AMBIENTS; i++) {
-		m_ambients[i] = 0;
-	}
+	//m_sound_time = m_paint_time = sample_pos();
 	//m_hw->stop();
 	//m_hw->start();
 }
@@ -245,25 +242,28 @@ void Mixer::paint_channels(u64 endtime) {
 		transfer_paint_buffer(end);
 		m_paint_time = end;
 	}
-	//host.printf("mixed: %d\n", mixed);
+	//printf("mixed: %d\n", mixed);
 }
 
 u64 Mixer::sample_pos() {
 	return m_hw->samplepos();
 }
 
+void Mixer::print() {
+}
+
 void Mixer::update() {
 	u64 last = m_sound_time;
 	m_sound_time = sample_pos();
-	//printf("%8d %8d\n",m_sound_time - last, m_speed/16);
+	//printf("%10lld %10lld\n",m_sound_time, m_paint_time);
 
 	u64 endtime = m_sound_time + m_speed * mixahead.value;
-	if (m_paint_time < m_sound_time) {
-		printf("\nsnd %8lld %8lld %8lld\n\n", m_sound_time, m_paint_time, endtime);
+	if (m_paint_time < m_sound_time || ((s64)(endtime - m_paint_time) < 0)) {
+	//	printf("\nsnd %8lld %8lld %8lld\n\n", m_sound_time, m_paint_time, endtime);
 		m_paint_time = m_sound_time;
 	}
 
-	//printf("%8lld %8lld %8lld %6lld\n", m_sound_time, m_paint_time, endtime, endtime - m_paint_time);
+	//printf("%8lld %8lld %6d %6d\n", m_sound_time, m_paint_time, ((u32)(endtime - m_paint_time)), ((u32)(m_sound_time - last)));
 
 	paint_channels(endtime);
 }
@@ -403,6 +403,10 @@ void Mixer::stop_all() {
 			m_channels[i].sfx = 0;
 			m_channels[i].end = 0;
 		}
+	}
+	
+	for (int i = 0; i < NUM_AMBIENTS; i++) {
+		m_ambients[i] = 0;
 	}
 
 	if (m_hw) {

@@ -2,6 +2,7 @@
 #include "Host.h"
 
 #include <stdlib.h>
+#include <malloc.h>
 #ifdef WIN32
 #include <crtdbg.h>
 #endif
@@ -10,7 +11,7 @@
 
 SYS sys;
 Host host;
-memPool pool(16 * 1024 * 1024);
+memPool pool;
 memPool linear;
 void new_game() {
 	host.execute("map start");
@@ -20,6 +21,10 @@ void spectre_main() {
 	int frame = 0;
 	double diff, new_time;
 	double old_time = sys.seconds();
+
+	int poolSize = (envGetHeapSize()<<3)/10;
+	char *poolBase = (char *)memalign(0x10, poolSize);
+	pool.initFromBase(poolBase, poolSize, 0x10);
 
 	sys.init();
 	host.init();

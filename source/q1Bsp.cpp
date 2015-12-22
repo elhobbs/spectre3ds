@@ -102,7 +102,7 @@ q1_texture * q1_texture::animate(int frame) {
 	return base;
 }
 
-extern u32* __linear_heap;
+extern u32* __ctru_linear_heap;
 extern shaderProgram_s q1Bsp_shader;
 
 void q1Bsp::set_render_mode() {
@@ -113,7 +113,7 @@ void q1Bsp::set_render_mode() {
 
 	gsShaderSet(&q1Bsp_shader);
 
-	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((u32)__linear_heap),
+	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((void *)__ctru_linear_heap),
 		GPU_ATTRIBFMT(0, 3, GPU_FLOAT) | GPU_ATTRIBFMT(1, 2, GPU_FLOAT) | GPU_ATTRIBFMT(2, 2, GPU_FLOAT),
 		0xFFC, 0x210, 1, &bufferOffsets, &bufferPermutations, &bufferNumAttributes);
 	

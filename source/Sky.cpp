@@ -6,6 +6,7 @@
 #include <gl\gl.h>
 #include <gl\glu.h>
 #endif
+#include "gs.h"
 
 vec3_t skybox_vecs[6][2] = {
 		{ { 1, 0, 0 }, { 0, 1, 0 } },
@@ -29,6 +30,7 @@ vec3_t skybox_corners[6] = {
 
 int skybox_verts_num = 0;
 vec5_t skybox_verts[6 * SKYBOX_DIV * SKYBOX_DIV * 4];
+gsVbo_s skybox_vbo;
 
 void skybox_coord(float *org, float *p) {
 	vec3_t dir;
@@ -44,6 +46,13 @@ void skybox_coord(float *org, float *p) {
 	VectorCopy(p, v);
 	v[3] = dir[0];
 	v[4] = dir[1];
+}
+
+inline void vec_copy(float *a, faceVertex_s *b)
+{
+	VectorCopy(&b->position.x, a);
+	b->texcoord[0] = a[3];
+	b->texcoord[1] = a[4];
 }
 
 void skybox_build(float *org) {
@@ -65,16 +74,22 @@ void skybox_build(float *org) {
 			}
 		}
 	}
+	gsVboInit(&skybox_vbo);
+	gsVboCreate(&skybox_vbo, sizeof(faceVertex_s) * 6 * SKYBOX_DIV * SKYBOX_DIV * 6);
+	for (int i = 0; i < skybox_verts_num; i += 4) {
+		gsVboAddData(&skybox_vbo, skybox_verts[i + 0], sizeof(faceVertex_s), 1);
+		gsVboAddData(&skybox_vbo, skybox_verts[i + 1], sizeof(faceVertex_s), 1);
+		gsVboAddData(&skybox_vbo, skybox_verts[i + 2], sizeof(faceVertex_s), 1);
+		gsVboAddData(&skybox_vbo, skybox_verts[i + 0], sizeof(faceVertex_s), 1);
+		gsVboAddData(&skybox_vbo, skybox_verts[i + 2], sizeof(faceVertex_s), 1);
+		gsVboAddData(&skybox_vbo, skybox_verts[i + 3], sizeof(faceVertex_s), 1);
+	}
 }
 
-void skybox_render(float *org, int sky) {
-	if (sky == 0) {
-		return;
-	}
+int gsUpdateTransformation();
+void GPU_DrawArrayDirectly(GPU_Primitive_t primitive, u8* data, u32 n);
 
-	if (skybox_verts_num == 0) {
-		skybox_build(org);
-	}
+void skybox_render(float *org, int sky) {
 
 #ifdef WIN32
 	glTranslatef(org[0], org[1], org[2]);
@@ -87,5 +102,14 @@ void skybox_render(float *org, int sky) {
 	}
 	glEnd();
 	glEnable(GL_CULL_FACE);
+#else
+
+	void *p = (void *)skybox_vbo.data;
+
+	sys.bind_texture(sky);
+	gsTranslate(org[0], org[1], org[2]);
+
+	gsUpdateTransformation();
+	GPU_DrawArrayDirectly(GPU_TRIANGLES, (u8*)p, 6 * SKYBOX_DIV * SKYBOX_DIV * 6);
 #endif
 }

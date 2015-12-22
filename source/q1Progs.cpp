@@ -101,10 +101,12 @@ static char *pr_opnames[] =
 
 int q1Progs::load() {
 	int start_pool_used = pool.used();
+
 	sysFile *file = sys.fileSystem.open("progs.dat");
 	if (file == 0) {
 		return -1;
 	}
+
 	if (file->read(reinterpret_cast<char *>(&m_programs), 0, sizeof(m_programs)) == 0) {
 		return -1;
 	}
@@ -153,7 +155,8 @@ int q1Progs::load() {
 	m_localstack_used = 0;
 
 	int end_pool_used = pool.used();
-	host.printf("%s loaded using %dk.\n",file->name(), (end_pool_used - start_pool_used) / 1024);
+	printf("%s loaded using %dk.\n", file->name(), (end_pool_used - start_pool_used) / 1024);
+	host.printf("%s loaded using %dk.\n", file->name(), (end_pool_used - start_pool_used) / 1024);
 
 	return 0;
 }

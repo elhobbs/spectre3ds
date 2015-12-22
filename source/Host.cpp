@@ -393,7 +393,7 @@ void Host::choose_game_draw(char *dirlist[], int total, int pos)
 	}
 	gfxFlushBuffers();
 	gfxSwapBuffers();
-	gspWaitForEvent(GSPEVENT_VBlank0, false);
+	gspWaitForEvent(GSPGPU_EVENT_VBlank0, false);
 }
 
 void Host::choose_game_dir() {
@@ -457,7 +457,7 @@ void Host::choose_game_dir() {
 		
 		gfxFlushBuffers();
 		gfxSwapBuffers();
-		gspWaitForEvent(GSPEVENT_VBlank0, false);
+		gspWaitForEvent(GSPGPU_EVENT_VBlank0, false);
 
 		// Power saving loop. Only poll the keys once per frame and sleep the CPU if there is nothing else to do
 		do {
@@ -519,7 +519,7 @@ void Host::choose_game_dir() {
 
 	gfxFlushBuffers();
 	gfxSwapBuffers();
-	gspWaitForEvent(GSPEVENT_VBlank0, false);
+	gspWaitForEvent(GSPGPU_EVENT_VBlank0, false);
 }
 
 void Host::add_game_directory(char *name) {
