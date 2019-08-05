@@ -1,0 +1,52 @@
+; Particle geometry shader
+.gsh particle c2 c0 1
+
+; Uniforms
+.fvec vUp, vRight
+
+; Constants
+.constf myconst(0.0, 1.0, 0.00390625, 0.1)
+.alias  zeros myconst.x
+.alias  ones  myconst.y
+
+; Outputs
+.out oPosition position
+.out outtc0 texcoord0
+.out oColor color
+
+; Aliases for the input data (stored at the beginning of fvec uniform space)
+.alias cp0_pos c0
+.alias cp0_color c1
+
+.entry particle_gsh_main
+.proc particle_gsh_main
+
+	mov r0, cp0_pos
+	mov r1, cp0_color
+	mul r1, myconst.zzzw, r1
+	mov r2, vRight
+	mov r3, vUp
+
+	; Emit bottom-left vertex of particle
+	setemit 0
+	mov oPosition, r0
+	mov outtc0, myconst.xxxx
+	mov oColor, r1
+	emit
+
+	; Emit bottom-right vertex of particle
+	setemit 1
+	add oPosition, r0, r2
+	mov outtc0, myconst.xyxx
+	mov oColor, r1
+	emit
+
+	; Emit top-left vertex of particle
+	setemit 2, prim
+	add oPosition, r0, r3
+	mov outtc0, myconst.yxxx
+	mov oColor, r1
+	emit
+
+	end
+.end

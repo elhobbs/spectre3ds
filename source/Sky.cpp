@@ -6,7 +6,8 @@
 #include <gl\gl.h>
 #include <gl\glu.h>
 #endif
-#include "gs.h"
+#include "ctr_vbo.h"
+#include "ctr_render.h"
 
 vec3_t skybox_vecs[6][2] = {
 		{ { 1, 0, 0 }, { 0, 1, 0 } },
@@ -30,7 +31,7 @@ vec3_t skybox_corners[6] = {
 
 int skybox_verts_num = 0;
 vec5_t skybox_verts[6 * SKYBOX_DIV * SKYBOX_DIV * 4];
-gsVbo_s skybox_vbo;
+ctrVbo_t skybox_vbo;
 
 void skybox_coord(float *org, float *p) {
 	vec3_t dir;
@@ -74,20 +75,17 @@ void skybox_build(float *org) {
 			}
 		}
 	}
-	gsVboInit(&skybox_vbo);
-	gsVboCreate(&skybox_vbo, sizeof(faceVertex_s) * 6 * SKYBOX_DIV * SKYBOX_DIV * 6);
+	ctrVboInit(&skybox_vbo);
+	ctrVboCreate(&skybox_vbo, sizeof(faceVertex_s) * 6 * SKYBOX_DIV * SKYBOX_DIV * 6);
 	for (int i = 0; i < skybox_verts_num; i += 4) {
-		gsVboAddData(&skybox_vbo, skybox_verts[i + 0], sizeof(faceVertex_s), 1);
-		gsVboAddData(&skybox_vbo, skybox_verts[i + 1], sizeof(faceVertex_s), 1);
-		gsVboAddData(&skybox_vbo, skybox_verts[i + 2], sizeof(faceVertex_s), 1);
-		gsVboAddData(&skybox_vbo, skybox_verts[i + 0], sizeof(faceVertex_s), 1);
-		gsVboAddData(&skybox_vbo, skybox_verts[i + 2], sizeof(faceVertex_s), 1);
-		gsVboAddData(&skybox_vbo, skybox_verts[i + 3], sizeof(faceVertex_s), 1);
+		ctrVboAddData(&skybox_vbo, skybox_verts[i + 0], sizeof(faceVertex_s), 1);
+		ctrVboAddData(&skybox_vbo, skybox_verts[i + 1], sizeof(faceVertex_s), 1);
+		ctrVboAddData(&skybox_vbo, skybox_verts[i + 2], sizeof(faceVertex_s), 1);
+		ctrVboAddData(&skybox_vbo, skybox_verts[i + 0], sizeof(faceVertex_s), 1);
+		ctrVboAddData(&skybox_vbo, skybox_verts[i + 2], sizeof(faceVertex_s), 1);
+		ctrVboAddData(&skybox_vbo, skybox_verts[i + 3], sizeof(faceVertex_s), 1);
 	}
 }
-
-int gsUpdateTransformation();
-void GPU_DrawArrayDirectly(GPU_Primitive_t primitive, u8* data, u32 n);
 
 void skybox_render(float *org, int sky) {
 
@@ -104,12 +102,12 @@ void skybox_render(float *org, int sky) {
 	glEnable(GL_CULL_FACE);
 #else
 
-	void *p = (void *)skybox_vbo.data;
-
 	sys.bind_texture(sky);
-	gsTranslate(org[0], org[1], org[2]);
+	ctrPushMatrix();
+	ctrTranslate(org[0], org[1], org[2]);
 
-	gsUpdateTransformation();
-	GPU_DrawArrayDirectly(GPU_TRIANGLES, (u8*)p, 6 * SKYBOX_DIV * SKYBOX_DIV * 6);
+	ctrUpdateTransformation();
+	ctrVboDrawDirectly(&skybox_vbo);
+	ctrPopMatrix();
 #endif
 }

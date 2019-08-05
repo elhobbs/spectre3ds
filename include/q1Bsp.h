@@ -7,8 +7,6 @@
 #include "memPool.h"
 #include "Model.h"
 
-#include "gs.h"
-
 #define FACE_SKY 4
 
 class q1_edge {

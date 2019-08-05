@@ -1,6 +1,7 @@
 #include "sys.h"
 #include "q1Mdl.h"
 #include "Host.h"
+#include "ctr_render.h"
 
 extern unsigned char *q1_palette;
 
@@ -189,8 +190,6 @@ q1Mdl::q1Mdl(char *name, sysFile *file):Model(name) {
 			}
 			m_groups[i].allocate_frames(1);
 			m_groups[i].m_frames[0].m_triverts = in_vert;
-			//gsVboInit(&m_groups[i].m_frames[0].m_vbo);
-			//gsVboCreate(&m_groups[i].m_frames[0].m_vbo, sizeof(faceVertex_s)*(m_num_tris)* 3);
 			mdl_cb += sizeof(faceVertex_s)*(m_num_tris)* 3;
 #if Q1_MDL_FRAME_NAMES
 			memcpy(m_groups[i].m_frames[0].m_name, alias_frame.name, 16);
@@ -227,8 +226,6 @@ q1Mdl::q1Mdl(char *name, sysFile *file):Model(name) {
 					return;
 				}
 				m_groups[i].m_frames[j].m_triverts = in_vert;
-				//gsVboInit(&m_groups[i].m_frames[j].m_vbo);
-				//gsVboCreate(&m_groups[i].m_frames[j].m_vbo, sizeof(faceVertex_s)*(m_num_tris)* 3);
 #if Q1_MDL_FRAME_NAMES
 				memcpy(m_groups[i].m_frames[j].m_name, alias_frame.name, 16);
 #endif
@@ -253,24 +250,29 @@ extern u32* __ctru_linear_heap;
 extern shaderProgram_s q1Mdl_shader;
 
 void q1Mdl::set_render_mode() {
-	u32 bufferOffsets = 0;
-	u64 bufferPermutations = 0x210;
-	u8 bufferNumAttributes = 2;
 
-	gsShaderSet(&q1Mdl_shader);
-
-	GPU_SetAttributeBuffers(2, (u32*)osConvertVirtToPhys((void *)__ctru_linear_heap),
-		GPU_ATTRIBFMT(0, 4, GPU_UNSIGNED_BYTE) | GPU_ATTRIBFMT(1, 2, GPU_FLOAT),
-		0xFFC, 0x210, 1, &bufferOffsets, &bufferPermutations, &bufferNumAttributes);
+#ifdef CITRO3D
+	ctrBindShader(&q1Mdl_shader);
+	//printf("q1Mdl_shader\n");
 	
-	GPU_SetTextureEnable(GPU_TEXUNIT0);
-	GPU_SetTexEnv(0,
-		GPU_TEVSOURCES(GPU_TEXTURE0, GPU_PRIMARY_COLOR, GPU_PRIMARY_COLOR),
-		GPU_TEVSOURCES(GPU_TEXTURE0, GPU_PRIMARY_COLOR, GPU_PRIMARY_COLOR),
-		GPU_TEVOPERANDS(0, 0, 0),
-		GPU_TEVOPERANDS(0, 0, 0),
-		GPU_MODULATE, GPU_MODULATE,
-		0xFFFFFFFF);
+	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
+	AttrInfo_Init(attrInfo);
+	AttrInfo_AddLoader(attrInfo, 0, GPU_UNSIGNED_BYTE, 4); // v0=position
+	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 2); // v1=texcoord
+
+	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
+	BufInfo_Init(bufInfo);
+	BufInfo_Add(bufInfo, __ctru_linear_heap, sizeof(float) * 2 + 4, 2, 0x210);
+
+	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvInit(env);
+	C3D_TexEnvSrc(env, C3D_Both, GPU_TEXTURE0, GPU_PRIMARY_COLOR, GPU_PRIMARY_COLOR);
+		
+	C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR);
+	C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA);
+	
+	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+#endif
 }
 
 vec3_t q1Mdl::m_normals[162] = {

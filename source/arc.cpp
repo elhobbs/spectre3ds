@@ -60,6 +60,7 @@ int arcColor(byte *image, int x, int y, int rad, int start, int end, int color)
 		return(0);
 	}
 #endif
+	/*
 	// Octant labelling
 	//      
 	//  \ 5 | 6 /
@@ -72,6 +73,7 @@ int arcColor(byte *image, int x, int y, int rad, int start, int end, int color)
 	//   /  |  \
 	//  / 2 | 1 \
 	//      +y
+	*/
 
 	// Initially reset bitmask to 0x00000000
 	// the set whether or not to keep drawing a given octant.
@@ -486,7 +488,6 @@ void arc_percent(byte *image, int x0, int y0, int rad, int thickness, int center
 }
 
 void hline_percent2(byte *image, int x0, int y0, int length, int thickness, int percent, int color) {
-	double delta = length / 100.0;
 	int end = length * percent / 100;
 	int center = color;
 	int border = 2;
@@ -497,7 +498,6 @@ void hline_percent2(byte *image, int x0, int y0, int length, int thickness, int 
 }
 
 void hline_percent(byte *image, int x0, int y0, int length, int thickness, int percent, int color) {
-	double delta = length / 100.0;
 	int end = length * percent / 100;
 	int center = color;
 	int border = 2;
@@ -520,7 +520,6 @@ void vline_percent(byte *image, int x0, int y0, int length, int thickness, int p
 	else if (percent < 0) {
 		percent = 0;
 	}
-	double delta = length / 100.0;
 	int end = length * percent / 100;
 	int center = color;
 	int border = 2;

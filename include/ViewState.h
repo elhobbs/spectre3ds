@@ -2,6 +2,7 @@
 
 #include "mathlib.h"
 #include "CmdBuffer.h"
+#include "ctr_vbo.h"
 #include "Particle.h"
 #include "q1Bsp.h"
 #include "cvar.h"
@@ -115,7 +116,7 @@ private:
 	int				m_fullbright;
 	int				m_lightstylevalue[256];	// 8.8 fraction of base light value
 
-	gsVbo_s			m_vbo;
+	ctrVbo_t		m_vbo;
 	int				m_no_light_id;
 };
 
@@ -157,3 +158,9 @@ inline void ViewState::reset() {
 	m_dlights.clear();
 	m_particles.clear();
 }
+
+extern int shader_mode;
+extern int text_mode;
+extern int particle_mode;
+extern int mdl_mode;
+extern int bsp_mode;

@@ -1,5 +1,11 @@
 #pragma once
 #include "vec3_fixed.h"
+#include "ctr_vbo.h"
+
+typedef struct {
+	float pos[3];
+	float color[4];
+} vbo_particle_t;
 
 typedef enum {
 	pt_static, pt_grav, pt_slowgrav, pt_fire, pt_explode, pt_explode2, pt_blob, pt_blob2, pt_max = 0xffffffff
@@ -19,6 +25,8 @@ public:
 	ptype_t			type;
 };
 
+#define MAX_PARTICLES 8192
+
 class Particles {
 public:
 	Particles();
@@ -32,7 +40,14 @@ public:
 	void effect(vec3_t org, vec3_t dir, int color, int count);
 	void lava_splash(vec3_t orgf);
 
+	void bind_texture();
+
+	void render(vbo_particle_t& p);
+
 	friend class ViewState;
+protected:
+	ctrVbo_t	m_vbo_particles;
+	ctrVbo_t	m_vbo_index;
 private:
 	int			m_texture_id;
 	int			m_num_particles;
@@ -45,8 +60,9 @@ private:
 };
 
 inline Particles::Particles() {
-	m_num_particles = 1024;
+	m_num_particles = MAX_PARTICLES;
 	m_particles = new Particle[m_num_particles];
+	clear();
 }
 
 inline void Particles::clear() {

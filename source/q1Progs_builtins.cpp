@@ -484,7 +484,7 @@ void q1Progs::PF_bprint(void)
 	char		*s;
 
 	s = PF_VarString(0);
-	//SV_BroadcastPrintf("%s", s);
+	m_sv.broadcast_printf("%s", s);
 }
 
 /*

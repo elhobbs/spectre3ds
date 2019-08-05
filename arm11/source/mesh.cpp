@@ -54,7 +54,7 @@ void *memalign(int size, int align) {
 	return (void *)adata;
 }
 #else
-#include "gs.h"
+#include "ctr_render.h"
 #endif
 
 /*
@@ -348,8 +348,6 @@ void draw_mdl_frame(q1MdlFrame *frame) {
 }
 
 #else
-void GPU_DrawArrayDirectly(GPU_Primitive_t primitive, u8* data, u32 n);
-
 void draw_mdl_frame(q1MdlFrame *frame) {
 	vboList_t *vbo = frame->m_vboList.next;
 	void *data;
@@ -361,8 +359,8 @@ void draw_mdl_frame(q1MdlFrame *frame) {
 
 	do {
 		data = (vbo + 1);
-		prim = vbo->prim == 0 ? GPU_TRIANGLE_FAN : GPU_TRIANGLE_STRIP;;
-		GPU_DrawArrayDirectly(prim, (u8 *)data, vbo->count);
+		prim = vbo->prim == 0 ? GPU_TRIANGLE_FAN : GPU_TRIANGLE_STRIP;
+		ctrDrawArrayDirectly(prim, (u8*)data, vbo->count);
 		vbo = vbo->next;
 	} while (vbo);
 }

@@ -145,10 +145,10 @@ u64 MixerHardwareDSP::samplepos() {
 	m_soundPos += diff;
 	m_lastPos = temp;
 
-	u64 delta = (svcGetSystemTick() - m_start2);
-	u64 samples = delta * m_speed / TICKS_PER_SEC_LL;
-	u32 keys = hidKeysHeld();
-	if(m_channel == 0 && ((keys & KEY_R) == KEY_R)) printf("%10lld %10lld \n",samples, m_soundPos);
+	//u64 delta = (svcGetSystemTick() - m_start2);
+	//u64 samples = delta * m_speed / TICKS_PER_SEC_LL;
+	//u32 keys = hidKeysHeld();
+	//if(m_channel == 0 && ((keys & KEY_R) == KEY_R)) printf("%10lld %10lld \n",samples, m_soundPos);
 
 	return m_soundPos;
 }

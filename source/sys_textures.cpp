@@ -5,6 +5,7 @@
 #endif
 #include "memPool.h"
 #include <stdlib.h>
+#include "ctr_render.h"
 
 static unsigned int *dest32 = 0;// [512 * 512 * 4];
 static unsigned char *dest256 = 0;
@@ -44,7 +45,7 @@ void SYS::pal16toRGBA(int width, int height, unsigned char *data, unsigned char 
 	}
 }
 unsigned int SYS::gen_texture_id(GPU_TEXTURE_FILTER_PARAM min, GPU_TEXTURE_FILTER_PARAM mag) {
-	unsigned int id = 0;
+	//unsigned int id = 0;
 #ifdef WIN32
 	if(dest32==0) {
 		dest32 = (unsigned int *)malloc(512*512*4*sizeof(int));
@@ -58,8 +59,8 @@ unsigned int SYS::gen_texture_id(GPU_TEXTURE_FILTER_PARAM min, GPU_TEXTURE_FILTE
 	tex3ds_t *ptr = new(pool) tex3ds_t;
 	memset(ptr, 0, sizeof(tex3ds_t));
 	m_last_tex_id_allocated = (unsigned)ptr;
-	ptr->min = min;
-	ptr->mag = mag;
+	//ptr->min = min;
+	//ptr->mag = mag;
 	return (unsigned)ptr;
 }
 
@@ -68,10 +69,13 @@ void SYS::bind_texture(int id, int unit) {
 		return;
 	}
 	tex3ds_t *ptr = (tex3ds_t *)id;
+	C3D_TexSetWrap(ptr, GPU_REPEAT, GPU_REPEAT);
+	C3D_TexBind(unit, ptr);
+	return;
 	int w = ptr->width;
 	int h = ptr->height;
-	byte *data = ptr->data;
-	GPU_TEXCOLOR type = ptr->type;
+	byte *data = (byte *)ptr->data;
+	GPU_TEXCOLOR type = ptr->fmt;
 	GPU_TEXUNIT tunit;
 	switch (unit) {
 	case 1:
@@ -82,7 +86,9 @@ void SYS::bind_texture(int id, int unit) {
 		tunit = GPU_TEXUNIT0;
 		break;
 	}
-	GPU_SetTexture(tunit, (u32*)osConvertVirtToPhys((u32 *)data), w, h, GPU_TEXTURE_MAG_FILTER(ptr->min) | GPU_TEXTURE_MIN_FILTER(ptr->mag) | GPU_TEXTURE_WRAP_S(GPU_REPEAT) | GPU_TEXTURE_WRAP_T(GPU_REPEAT), type);
+#ifdef CITRO3D
+	ctrSetTex(tunit, type, w, h, data);
+#endif
 }
 
 int SYS::texture_size(int id) {
@@ -198,10 +204,10 @@ int tex_dim(int x)
 	return 8;
 }
 
+#if 0
 static void waitforit(char *text) {
 	printf(text);
 	printf("press A...");
-#if 0
 	do {
 		scanKeys();
 		gspWaitForEvent(GSPEVENT_VBlank0, false);
@@ -210,9 +216,9 @@ static void waitforit(char *text) {
 		scanKeys();
 		gspWaitForEvent(GSPEVENT_VBlank0, false);
 	} while ((keysDown() & KEY_A) == KEY_A);
-#endif
 	printf("done\n");
 }
+#endif
 
 byte* _scale_texture(tex3ds_t *tx, byte *in,bool scale)
 {
@@ -349,9 +355,9 @@ void _pal256toRGBA(tex3ds_t *tx, unsigned char *data, unsigned char *palette, in
 			return;
 		}
 	}
-	tile8 = tx->data;
+	tile8 = (byte *)tx->data;
 	byte transindex = *src;
-	tx->type = GPU_RGBA5551;// trans ? GPU_RGBA8 : GPU_RGB8;
+	tx->fmt = GPU_RGBA5551;// trans ? GPU_RGBA8 : GPU_RGB8;
 	
 	//printf("converting\n");
 	for (j = 0; j < height; j += 8) {
@@ -395,12 +401,13 @@ void SYS::load_texture_L8(int id, int width, int height, unsigned char *data) {
 		tex->data = (byte *)linear.alloc(width*height, 0x80);
 		tex->width = width;
 		tex->height = height;
-		tex->type = GPU_A8;
+		tex->fmt = GPU_A8;
+		C3D_TexSetFilter(tex, GPU_LINEAR, GPU_LINEAR);
 	}
 	if (tex->data == 0) {
 		return;
 	}
-	byte *tile = tex->data;
+	byte *tile = (byte *)tex->data;
 	for (int j = 0; j < height; j += 8) {
 		for (int i = 0; i < width; i += 8) {
 			parseTile8(tile, data, width, height, i, j);
@@ -432,6 +439,7 @@ void SYS::load_texture256(int id, int width, int height, unsigned char *data, un
 	//::printf("%08x %d %d\n", id, width, height);
 	tex->width = width;
 	tex->height = height;
+	C3D_TexSetFilter(tex, GPU_LINEAR, GPU_LINEAR);
 	_pal256toRGBA(tex, data, palette, trans);
 	if (trans == false) {
 		//this process is destructive so we need to copy the buffer
@@ -468,7 +476,7 @@ void SYS::load_texture256(int id, int width, int height, unsigned char *data, un
 }
 
 void trans_tex(int width, int height, byte *in4, byte *out) {
-	int mask = in4[0] & 0xf;
+	unsigned int mask = in4[0] & 0xf;
 	for (int i = 0; i< width*height; i += 2) {
 		unsigned int c0 = (*in4) & 0xf;
 		unsigned int c1 = ((*in4) >> 4) & 0xf;
@@ -489,7 +497,7 @@ void SYS::load_texture16(int id, int width, int height, unsigned char *data, uns
 		return;
 	}
 
-	byte *text = new(pool)byte[width * height / 2];
+	//byte *text = new(pool)byte[width * height / 2];
 
 	pal16toRGBA(width, height, data, palette);
 	if (trans) {
@@ -505,7 +513,7 @@ void SYS::load_texture16(int id, int width, int height, unsigned char *data, uns
 }
 
 void trans_tex_byte(int width, int height, byte *in, byte *out) {
-	int mask = in[0];
+	unsigned int mask = in[0];
 	for (int i = 0; i< width*height; i ++) {
 		unsigned int c0 = *in;
 

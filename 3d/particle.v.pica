@@ -1,0 +1,41 @@
+; Particle vertex shader
+
+; Uniforms
+.fvec projection[4], modelView[4]
+.fvec lightDirection, lightAmbient
+
+; Constants
+.constf myconst(0.0, 1.0, 3.0, 0.5)
+.alias  zeros myconst.x
+.alias  ones  myconst.y
+
+; Outputs
+.out oPos dummy
+.out oColor dummy
+
+; Inputs
+.in inPos v0
+.in inColor v1
+
+.entry particle_vsh_main
+.proc particle_vsh_main
+	mov r0.xyz, inPos
+	mov r0.w,   ones
+
+	; r1 = modelView * vec4(iCenter, 1.0)
+	dp4 r1.x, modelView[0], r0
+	dp4 r1.y, modelView[1], r0
+	dp4 r1.z, modelView[2], r0
+	dp4 r1.w, modelView[3], r0
+
+	; oCenter = projection * r1
+	dp4 oPos.x, projection[0], r1
+	dp4 oPos.y, projection[1], r1
+	dp4 oPos.z, projection[2], r1
+	dp4 oPos.w, projection[3], r1
+
+	; oColor = inColor
+	mov oColor, inColor
+
+	end
+.end

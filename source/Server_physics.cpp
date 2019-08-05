@@ -1030,13 +1030,13 @@ void Server::Physics_Step(edict_t *ent)
 
 		add_gravity(ent);
 		check_velocity(ent);
-		fly_move(ent, m_frametime, NULL);
+		fly_move(ent, m_frametime, 0);
 		link_edict(ent, true);
 
 		if ((int)ent->v.flags & FL_ONGROUND)	// just hit ground
 		{
-			//if (hitsound)
-				//SV_StartSound(ent, 0, "demon/dland2.wav", 255, 1);
+			if (hitsound)
+				start_sound(ent, 0, "demon/dland2.wav", 255, 1);
 		}
 	}
 

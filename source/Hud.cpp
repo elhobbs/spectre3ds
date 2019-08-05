@@ -5,6 +5,7 @@
 #include <gl\gl.h>
 #include <gl\glu.h>
 #endif
+#include "ctr_render.h"
 
 static byte hud_pal[] = { 0, 0, 0, 0, 0xff, 0, 0xff, 0, 0, 0xff, 0xd7, 0x00, 0x00, 0x00, 0xff, 0xcc, 0xcc, 0xcc }; //clear, green, red, gold, blue, grey
 
@@ -152,8 +153,6 @@ void Hud::frame(int *stats, int items) {
 	render_pic(m_image_id, 32, 96, HUD_WIDTH, HUD_HEIGHT);
 	glColor4f(1, 1, 1, 1.0f);
 #else
-	extern int text_mode;
-	sys.renderMode.set_mode(text_mode);
 
 	int x_pos = 2;
 	int y_pos = 2;
@@ -203,23 +202,25 @@ void Hud::frame(int *stats, int items) {
 	tri1[2].texcoord[0] = s1;
 	tri1[2].texcoord[1] = t2;
 
-	extern shaderProgram_s text_shader;
-	float hudambient[] = {
-		m_hud_alpha_pulse, 1.0f, 1.0f, 1.0f
-	};
-	GPU_SetFloatUniform(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(text_shader.vertexShader, "lightAmbient"), (u32*)hudambient, 1);
+#if CITRO3D
+	//extern shaderProgram_s text_shader;
+	//float hudambient[] = {
+	//	m_hud_alpha_pulse, 1.0f, 1.0f, 1.0f
+	//};
+	sys.renderMode.set_mode(shader_mode);
+	//GPU_SetFloatUniform(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(text_shader.vertexShader, "lightAmbient"), (u32*)hudambient, 1);
 
-	gsVboClear(&m_vbo);
+	ctrVboClear(&m_vbo);
 	sys.bind_texture(m_image_id);
-	gsVboAddData(&m_vbo, tri0, sizeof(tri0), 3);
-	gsVboAddData(&m_vbo, tri1, sizeof(tri1), 3);
-	gsVboDrawDirectly(&m_vbo);
+	ctrVboAddData(&m_vbo, tri0, sizeof(tri0), 3);
+	ctrVboAddData(&m_vbo, tri1, sizeof(tri1), 3);
+	ctrVboDrawDirectly(&m_vbo);
 	//printf("health: %3d\n", health);
-	
-	float lightAmbient[] = {
-		0.9f, 0.9f, 0.9f, 1.0f
-	};
-	GPU_SetFloatUniform(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(text_shader.vertexShader, "lightAmbient"), (u32*)lightAmbient, 1);
 
+	//float lightAmbient[] = {
+	//	0.9f, 0.9f, 0.9f, 1.0f
+	//};
+	//GPU_SetFloatUniform(GPU_VERTEX_SHADER, shaderInstanceGetUniformLocation(text_shader.vertexShader, "lightAmbient"), (u32*)lightAmbient, 1);
+#endif
 #endif
 }

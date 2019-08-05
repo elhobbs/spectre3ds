@@ -101,7 +101,7 @@ inline void* memPool::alloc(ssize_t nbytes, ssize_t align)
 	aligned_start &= (~(align - 1));
 	if (aligned_start + aligned_size > m_size) {
 		m_failed_size += aligned_size;
-		printf("memPool alloc failed: %d free %d align %d\n", nbytes, m_pos, align);
+		printf("memPool alloc failed: %d free %d align %d %d\n", nbytes, m_pos, align, m_size);
 		while (1) {
 			gspWaitForEvent(GSPGPU_EVENT_VBlank0, true);
 		};

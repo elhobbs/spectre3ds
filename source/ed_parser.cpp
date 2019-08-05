@@ -58,7 +58,7 @@ float ed_parser::parse_float() {
 	bool fin = false, neg;
 
 	skip_white_space();
-	if (neg = (buffer[position] == '-')) {
+	if ((neg = (buffer[position] == '-'))) {
 		position++;
 	}
 
@@ -155,7 +155,7 @@ char* ed_parser::parse_string() {
 
 	bool fin = false, in_quote;
 
-	if (in_quote = (buffer[position] == '\"')) {
+	if ((in_quote = (buffer[position] == '\"'))) {
 		position++;
 	}
 	int end = position;
@@ -206,7 +206,6 @@ bool ed_parser::check(char *token, int len) {
 }
 
 bool ed_parser::parse_ed(int entnum, bool allocate) {
-	int pos = position;
 	if (!check("{", 1)) {
 		return false;
 	}
@@ -333,7 +332,6 @@ int ed_parser::load(q1Progs *progs, char *data) {
 }
 
 bool ed_parser::parse_globaldefs() {
-	int pos = position;
 	if (!check("{", 1)) {
 		return false;
 	}

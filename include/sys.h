@@ -6,6 +6,7 @@
 
 typedef unsigned char byte;
 typedef float vec3_t[3];
+typedef float vec4_t[4];
 typedef float vec5_t[5];
 
 #ifdef WIN32
@@ -19,14 +20,17 @@ typedef void (APIENTRY *lpSetVsyncFUNC) (unsigned int);
 #include "mathlib.h"
 #include "FileSystem.h"
 #include "RenderMode.h"
+#include <citro3d.h>
 
-typedef struct {
+typedef C3D_Tex tex3ds_t;
+
+/*typedef struct {
 	int width;
 	int height;
 	GPU_TEXCOLOR type;
 	GPU_TEXTURE_FILTER_PARAM min, mag;
 	byte *data;
-} tex3ds_t;
+} tex3ds2_t;*/
 
 typedef enum {
 	EV_NONE=0,
@@ -103,8 +107,7 @@ inline event_t EvQueue::get_event( void ) {
 
 typedef enum {
 	FRAME_LEFT,
-	FRAME_RIGHT,
-	FRAME_FINAL
+	FRAME_RIGHT
 } frmType_t;
 
 class SYS {

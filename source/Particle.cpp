@@ -27,6 +27,24 @@ void Particles::init() {
 	extern unsigned char *q1_palette;
 	m_texture_id = sys.gen_texture_id();
 	sys.load_texture256(m_texture_id, 8, 8, &dottexture[0][0], q1_palette,1);
+	ctrVboInit(&m_vbo_particles);
+	ctrVboCreate(&m_vbo_particles, sizeof(vbo_particle_t) * m_num_particles);
+	ctrVboInit(&m_vbo_index);
+	ctrVboCreate(&m_vbo_index, sizeof(u16) * m_num_particles);
+
+	//fill this once it should never change
+	u16* idx = (u16*)m_vbo_index.data;
+	int i;
+	for (i = 0; i < m_num_particles; i++) {
+		*idx++ = i;
+	}
+}
+
+void Particles::bind_texture() {
+	sys.bind_texture(m_texture_id);
+}
+
+void Particles::render(vbo_particle_t& p) {
 }
 
 void Particles::teleport_splash(vec3_t orgf) {
@@ -73,7 +91,7 @@ void Particles::explosion(vec3_t orgf) {
 	int			i, j;
 	Particle	*p;
 	float cl_time = host.cl_time();
-	float frame_time = host.frame_time();
+	//float frame_time = host.frame_time();
 	vec3_fixed32	org;
 
 	org = orgf;
@@ -151,7 +169,7 @@ void Particles::rocket_trail(vec3_t startf, vec3_t endf, int type)
 	vec3_fixed32	vec;
 	fixed32p16		len;
 	float cl_time = host.cl_time();
-	float frame_time = host.frame_time();
+	//float frame_time = host.frame_time();
 
 	start = startf;
 	end = endf;
@@ -343,4 +361,6 @@ void Particles::lava_splash(vec3_t orgf) {
 		}
 	}
 }
+
+
 

@@ -845,7 +845,6 @@ void q1Progs::ED_WriteGlobals(FILE *f)
 	int			i;
 	char		*name;
 	int			type;
-	int len;
 
 	fprintf(f, "{\n");
 	for (i = 0; i<m_programs.numglobaldefs; i++)

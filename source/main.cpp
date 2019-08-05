@@ -18,7 +18,6 @@ void new_game() {
 }
 
 void spectre_main() {
-	int frame = 0;
 	double diff, new_time;
 	double old_time = sys.seconds();
 

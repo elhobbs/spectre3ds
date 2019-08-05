@@ -226,8 +226,6 @@ void ClientState::render_hud() {
 	sys.pop_2d();
 }
 
-#define CONFIG_3D_SLIDERSTATE (*(float*)0x1FF81080)
-
 void ClientState::render(frmType_t type) {
 	if (m_signon != SIGNONS) {
 		m_mixer.update(vec3_origin, vec3_origin, vec3_origin, vec3_origin);
@@ -237,7 +235,7 @@ void ClientState::render(frmType_t type) {
 	m_mixer.update();
 	m_music.update();
 
-	float slider = CONFIG_3D_SLIDERSTATE;
+	//float slider = osGet3DSliderState();
 	entity_t *cl = entity_num(m_viewentity);
 	vec3_t org, ang, vieworg;
 
@@ -247,8 +245,8 @@ void ClientState::render(frmType_t type) {
 
 	AngleVectors(ang, v_forward, v_right, v_up);
 
-	float vofs = 0;
-	if (slider > 0.0f) {
+	/*float vofs = 0;
+	if (0 && slider > 0.0f) {
 		float ofs = 0;
 		switch (type) {
 		case FRAME_LEFT:
@@ -261,7 +259,7 @@ void ClientState::render(frmType_t type) {
 			break;
 		}
 		VectorMA(org, ofs, v_right, org);
-	}
+	}*/
 
 	vieworg[0] = 0;
 	vieworg[1] = 0;
@@ -274,6 +272,7 @@ void ClientState::render(frmType_t type) {
 	m_view.render(org, ang);
 
 	render_view_model();
+	
 	//turn off dynmic lights - it will get turned back on
 	//for the next frame. this should prevent recalculating lights in stereo
 	m_view.m_dlights.dynamic(false);

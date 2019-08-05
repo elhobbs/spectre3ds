@@ -1,0 +1,48 @@
+; Uniforms
+.fvec projection[4], modelView[4]
+.fvec lightDirection, lightAmbient
+
+; Constants
+.constf myconst(1.0, 0.0, 0.5, 1.0)
+.alias  zeros myconst.yyyy ; Vector full of zeros
+.alias  ones  myconst.xxxx ; Vector full of ones
+
+; Outputs
+.out outpos position
+.out outtc0 texcoord0
+.out outtc1 texcoord1
+.out outtc2 texcoord2
+.out outclr color
+
+; Inputs (defined as aliases for convenience)
+.alias inpos v0
+.alias intex0 v1
+.alias intex1 v2
+.alias intex2 v3
+
+.proc main
+	; Force the w component of inpos to be 1.0
+	mov r0.xyz, inpos
+	mov r0.w,   ones
+	
+	; r1 = modelView * inpos
+	dp4 r1.x, modelView[0], r0
+	dp4 r1.y, modelView[1], r0
+	dp4 r1.z, modelView[2], r0
+	dp4 r1.w, modelView[3], r0
+
+	; outpos = projection * r1
+	dp4 outpos.x, projection[0], r1
+	dp4 outpos.y, projection[1], r1
+	dp4 outpos.z, projection[2], r1
+	dp4 outpos.w, projection[3], r1
+
+	; outtex = intex
+	mov outtc0, intex0
+	mov outtc1, intex1
+	mov outtc2, intex2
+
+	mov outclr, ones
+
+	end
+.end

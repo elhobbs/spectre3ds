@@ -7,8 +7,6 @@
 #include "memPool.h"
 #include "Model.h"
 
-#include "gs.h"
-
 class q1SpriteFrame {
 public:
 	q1SpriteFrame();

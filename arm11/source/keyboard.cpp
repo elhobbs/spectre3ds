@@ -72,7 +72,7 @@ static sregion_t key_array2[] = {
 	{ 48, 2 * 16, 1, 0, K_F3, key_load },
 	{ 48, 3 * 16, 1, 0, K_F4, key_save },
 	{ 48, 4 * 16, 1, 0, K_F5, key_quit },
-	{ 270, 0, 6, 0, 0x200, 0 },
+	{ 270, 4*16, 6, 0, 0x200, 0 },
 };
 
 static u16 keyboard_fg = RGB8_to_565(192, 192, 192);

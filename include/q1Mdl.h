@@ -8,8 +8,6 @@
 #include "memPool.h"
 #include "Model.h"
 
-#include "gs.h"
-
 #define Q1_MDL_FRAME_NAMES 0
 
 typedef struct vboList_s {

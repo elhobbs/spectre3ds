@@ -5,18 +5,13 @@
 #include <3ds.h>
 #include <3ds/types.h>
 
-#include "math3.h"
-#include "gs.h"
+#include "ctr_vbo.h"
+#include "ctr_render.h"
 
 #ifdef WIN32
 #include <gl\gl.h>
 #include <gl\glu.h>
 #endif
-
-extern shaderProgram_s shader;
-extern shaderProgram_s q1Bsp_shader;
-extern shaderProgram_s q1Mdl_shader;
-extern int shader_mode;
 
 cvar_t	r_ambient = { "r_ambient", "0" };
 cvar_t	r_fullbright = { "r_fullbright", "0" };
@@ -25,11 +20,12 @@ void skybox_build(float *org);
 
 int mdl_mode = -1;
 int bsp_mode = -1;
+
 void ViewState::init() {
 	m_particles.init();
 	m_dlights.clear();
-	gsVboInit(&m_vbo);
-	gsVboCreate(&m_vbo, sizeof(faceVertex_s)*(4000) * 3);
+	ctrVboInit(&m_vbo);
+	ctrVboCreate(&m_vbo, sizeof(faceVertex_s)*(4000) * 3);
 	//make a special fullbright texture for no lightmap faces
 	m_no_light_id = sys.gen_texture_id();
 	byte *lightmap_data = new byte[8 * 8];
@@ -174,7 +170,7 @@ void ViewState::store_efrags(efrag_t *ppefrag)
 	efrag_t		*pefrag;
 
 
-	while ((pefrag = ppefrag) != NULL)
+	while ((pefrag = ppefrag) != 0)
 	{
 		pent = pefrag->entity;
 		clmodel = pent->model;
@@ -275,11 +271,7 @@ void DLights::render_impact(vec3_fixed32 origin, vec3_fixed32 impact, q1_plane &
 #endif
 }
 
-int gsVboDrawFan(gsVbo_s* vbo);
-void GPU_DrawArrayDirectly(GPU_Primitive_t primitive, u8* data, u32 n);
-int gsUpdateTransformation();
-
-unsigned		blocklights[18 * 18];
+static unsigned		blocklights[18 * 18];
 
 void ViewState::render_face(q1_face *face, int framenum) {
 	if (face->m_texinfo->m_flags & FACE_SKY) {
@@ -287,7 +279,6 @@ void ViewState::render_face(q1_face *face, int framenum) {
 		return;
 	}
 
-	bool depth = false;
 	q1_texture* tx = face->m_texinfo->m_miptex->animate(framenum);
 	if (tx) {
 		tx->bind();
@@ -325,21 +316,19 @@ void ViewState::render_face(q1_face *face, int framenum) {
 
 		sys.bind_texture(face->m_lightmap_id->m_id, 1);
 	}
-	gsUpdateTransformation();
-	GPU_DrawArrayDirectly(GPU_TRIANGLE_FAN, (u8 *)face->m_vertex_array, face->m_num_points);
+	ctrUpdateTransformation();
+	ctrDrawArrayDirectly(GPU_TRIANGLE_FAN, (u8 *)face->m_vertex_array, face->m_num_points);
 	
 	if (tx == 0 || tx->m_id2 == -1 || m_fullbright || (face->m_texinfo->m_flags & 1) != 0) {
 		return;
 	}
-	//draw again with fullbright texture
-	GPU_SetDepthTestAndWriteMask(true, GPU_EQUAL, GPU_WRITE_ALL);
+#if CITRO3D
+	C3D_DepthTest(true, GPU_EQUAL, GPU_WRITE_ALL);
 	sys.bind_texture(tx->m_id2);
 	sys.bind_texture(m_no_light_id, 1);
-	GPU_DrawArrayDirectly(GPU_TRIANGLE_FAN, (u8 *)face->m_vertex_array, face->m_num_points);
-	GPU_SetDepthTestAndWriteMask(true, GPU_GREATER, GPU_WRITE_ALL);
-	//sys.bind_texture(tx->m_id);
-	//face->bind();
-	//gsVboDrawFan(&face->vbo);
+	ctrDrawArrayDirectly(GPU_TRIANGLE_FAN, (u8*)face->m_vertex_array, face->m_num_points);
+	C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_ALL);
+#endif
 #ifdef WIN32
 	q1_texture* tx = face->m_texinfo->m_miptex->animate(framenum);
 	glBindTexture(GL_TEXTURE_2D, tx->m_id);
@@ -431,7 +420,6 @@ int ViewState::render_bsp_r(q1_bsp_node *node, unsigned int planebits) {
 		return -1;
 	}
 	do {
-		int nodenum = node - m_worldmodel->m_nodes;
 		if (node->m_visframe != m_framecount) {
 			return 0;
 		}
@@ -470,16 +458,16 @@ void ViewState::render_world(float *origin, float *angles) {
 
 	sys.renderMode.set_mode(bsp_mode);
 	render_bsp_r(&m_worldmodel->m_nodes[0], 15);
-	sys.renderMode.set_mode(shader_mode);
+	//sys.renderMode.set_mode(shader_mode);
 	
 	//update lightmap textures
 	load_dirty_lightmaps(m_worldmodel);
 }
 
 void DLights::setup_lights() {
+#ifdef WIN32
 	DLight *dl = m_list;
 	float cl_time = (float)host.cl_time();
-#ifdef WIN32
 	glEnable(GL_LIGHTING);
 	for (int i = 0; i<8; i++, dl++) {
 		if (dl->m_die < cl_time || dl->m_radius == 0) {
@@ -508,7 +496,7 @@ void update_lm(q1_lightmap *lm) {
 		return;
 	}
 	tex3ds_t *tex = (tex3ds_t*)(lm->m_id);
-	byte *tile = tex->data;
+	byte *tile = (byte *)tex->data;
 	byte* data = lm->m_data;
 	int width = lm->m_width;
 	int height = lm->m_height;
@@ -548,7 +536,7 @@ void ViewState::render(float *origin, float *angles) {
 	vec3_t forward, right, up;
 	float fov = _3ds_fov.value;
 
-	gsVboClear(&m_vbo);
+	ctrVboClear(&m_vbo);
 	m_camera = origin;
 	AngleVectors(angles, forward, right, up);
 	m_forward = forward;
@@ -615,78 +603,93 @@ void ViewState::render(float *origin, float *angles) {
 	//host.printf("o: %4.2f %4.2f %4.2f\n", origin[0], origin[1], origin[2]);
 	//host.printf("a: %3.2f %3.2f %3.2f\n", angles[0], angles[1], angles[2]);
 
-#if 1
 	//draw world
-	gsMatrixMode(GS_MODELVIEW);
-	gsLoadIdentity();
-		gsRotateY(-90.0f*M_PI / 180.0f);
-		gsRotateX(90.0f*M_PI / 180.0f);
-		gsRotateZ(180.0f*M_PI / 180.0f);
+	ctrLoadIdentity();
+		ctrRotateY(-90.0f*M_PI / 180.0f);
+		ctrRotateX(90.0f*M_PI / 180.0f);
+		ctrRotateZ(180.0f*M_PI / 180.0f);
 
 	//push here to save rotated orientation for view ent
-	gsPushMatrix();
-		gsRotateX((-angles[ROLL]) * M_PI / 180.0f);
-		gsRotateY((-angles[PITCH]) * M_PI / 180.0f);
-		gsRotateZ((angles[YAW]) * M_PI / 180.0f);
-		gsTranslate(-origin[0], -origin[1], -origin[2]);
-		//printf("render_world+\n");
-		render_world(origin, angles);
-		//printf("render_world-\n");
+	ctrPushMatrix();
+		ctrRotateX((180-angles[ROLL]) * M_PI / 180.0f);
+		ctrRotateY((-angles[PITCH]) * M_PI / 180.0f);
+		ctrRotateZ((-angles[YAW]) * M_PI / 180.0f);
+		ctrTranslate(-origin[0], -origin[1], -origin[2]);
 
-		sys.renderMode.set_mode(bsp_mode);
+		render_world(origin, angles);
+
+
+		int sprite_count = 0;
+		int alias_count = 0;
+
 		for (int i = 0; i < m_numvisedicts; i++) {
 			entity_t *ent = m_visedicts[i];
 			if (ent->model == 0) {
 				host.printf("error: null entity model\n");
+				continue;
+			}
+			if (ent->model->type() == mod_alias) {
+				alias_count++;
+				continue;
+			}
+			if (ent->model->type() == mod_sprite) {
+				sprite_count++;
 				continue;
 			}
 			if (ent->model->type() != mod_brush) {
 				continue;
 			}
-			gsPushMatrix();
+			ctrPushMatrix();
 			render(ent);
-			gsPopMatrix();
+			ctrPopMatrix();
 		}
 
-		sys.renderMode.set_mode(mdl_mode);
-		for (int i = 0; i < m_numvisedicts; i++) {
-			entity_t *ent = m_visedicts[i];
-			if (ent->model == 0) {
-				host.printf("error: null entity model\n");
-				continue;
+		if (alias_count) {
+			sys.renderMode.set_mode(mdl_mode);
+			for (int i = 0; i < m_numvisedicts; i++) {
+				entity_t* ent = m_visedicts[i];
+				if (ent->model == 0) {
+					host.printf("error: null entity model\n");
+					continue;
+				}
+				if (ent->model->type() != mod_alias) {
+					continue;
+				}
+				ctrPushMatrix();
+				render(ent);
+				ctrPopMatrix();
 			}
-			if (ent->model->type() != mod_alias) {
-				continue;
-			}
-			gsPushMatrix();
-			render(ent);
-			gsPopMatrix();
 		}
-		
-		sys.renderMode.set_mode(shader_mode);
-		for (int i = 0; i < m_numvisedicts; i++) {
-			entity_t *ent = m_visedicts[i];
-			if (ent->model == 0) {
-				host.printf("error: null entity model\n");
-				continue;
+
+		if (sprite_count || m_draw_sky) {
+			sys.renderMode.set_mode(shader_mode);
 		}
-			if (ent->model->type() != mod_sprite) {
-				continue;
-			}
-			gsPushMatrix();
-			render(ent);
-			gsPopMatrix();
-		}
+
 		if (m_draw_sky) {
 			int sky = m_worldmodel->m_skytexture_id;
 			skybox_render(origin, sky);
 		}
-		gsPopMatrix();
+		if (sprite_count) {
+			for (int i = 0; i < m_numvisedicts; i++) {
+				entity_t* ent = m_visedicts[i];
+				if (ent->model == 0) {
+					host.printf("error: null entity model\n");
+					continue;
+				}
+				if (ent->model->type() != mod_sprite) {
+					continue;
+				}
+				ctrPushMatrix();
+				render(ent);
+				ctrPopMatrix();
+			}
+		}
+
+		render_particles();
+
+		ctrPopMatrix();
 
 	//printf("  %d\n", m_framecount);
-#else
-	render_world(origin, angles);
-#endif
 	m_framecount++;
 }
 
@@ -702,28 +705,19 @@ void ViewState::render_viewent() {
 	render(m_viewent);
 
 	glDepthRange(0.0, 1.0);
-#else
+#endif
+#if CITRO3D
 	sys.renderMode.set_mode(mdl_mode);
+	ctrPushMatrix();
+	ctrLoadIdentity();
 
-	gsPushMatrix();
-	//GPU_DepthRange(-0.3f, 0.0f);
-	gsTranslate(m_viewent->origin[0], m_viewent->origin[1], m_viewent->origin[2]);
-	//gsScale(0.5f, 0.0f, 0.0f);
+	ctrTranslate(m_viewent->origin[0], m_viewent->origin[1], m_viewent->origin[2] - 11.0f);
+	ctrRotateZ((90.0f) * M_PI / 180.0f);
+	ctrRotateY((90.0f) * M_PI / 180.0f);
 
-	gsRotateZ(m_viewent->angles[1] * M_PI / 180.0f);
-	gsRotateY(m_viewent->angles[0] * M_PI / 180.0f);
-	gsRotateX(m_viewent->angles[2] * M_PI / 180.0f);
-	
-	//GPU_SetDepthTestAndWriteMask(true, GPU_ALWAYS, GPU_WRITE_ALL);
-	//GPU_DepthMap(-1.0f, -0.1f);
-	//render(m_viewent);
-	//GPU_SetDepthTestAndWriteMask(true, GPU_GEQUAL, GPU_WRITE_ALL);
-	GPU_DepthMap(-1.0f, 0.5f);
 	render(m_viewent);
-	GPU_DepthMap(-1.0f, 0.0f);
-	//GPU_SetDepthTestAndWriteMask(true, GPU_GREATER, GPU_WRITE_ALL);
-	gsPopMatrix();
 
+	ctrPopMatrix();
 #endif
 }
 
@@ -786,14 +780,20 @@ void ViewState::render_sprite(entity_t *ent) {
 	glVertex3fv(point);
 
 	glEnd();
-#else
+#endif
+
+#if CITRO3D
 	faceVertex_s f;
-	void *p = gsVboGetOffset(&m_vbo);
+	void *p = ctrVboGetOffset(&m_vbo);
+	if (!p) {
+		::printf("render_sprite\n");
+		return;
+	}
 
 	sys.bind_texture(frame->m_id);
-	gsTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
+	ctrTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
 
-#ifndef GS_NO_NORMALS
+#ifdef MDL_NORMALS
 	m_forward.copy_to(&f.normal.x);
 #endif
 
@@ -801,21 +801,21 @@ void ViewState::render_sprite(entity_t *ent) {
 	(m_up * frame->down + m_right * frame->left).copy_to(&f.position.x);
 	f.texcoord[0] = 0.0f;
 	f.texcoord[1] = 1.0f;
-	if (gsVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
+	if (ctrVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
 		return;
 	}
 
 	(m_up * frame->up + m_right * frame->left).copy_to(&f.position.x);
 	f.texcoord[0] = 0.0f;
 	f.texcoord[1] = 0.0f;
-	if (gsVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
+	if (ctrVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
 		return;
 	}
 
 	(m_up * frame->up + m_right * frame->right).copy_to(&f.position.x);
 	f.texcoord[0] = 1.0f;
 	f.texcoord[1] = 0.0f;
-	if (gsVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
+	if (ctrVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
 		return;
 	}
 
@@ -823,35 +823,31 @@ void ViewState::render_sprite(entity_t *ent) {
 	(m_up * frame->down + m_right * frame->left).copy_to(&f.position.x);
 	f.texcoord[0] = 0.0f;
 	f.texcoord[1] = 1.0f;
-	if (gsVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
+	if (ctrVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
 		return;
 	}
 
 	(m_up * frame->up + m_right * frame->right).copy_to(&f.position.x);
 	f.texcoord[0] = 1.0f;
 	f.texcoord[1] = 0.0f;
-	if (gsVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
+	if (ctrVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
 		return;
 	}
 
 	(m_up * frame->down + m_right * frame->right).copy_to(&f.position.x);
 	f.texcoord[0] = 1.0f;
 	f.texcoord[1] = 1.0f;
-	if (gsVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
+	if (ctrVboAddData(&m_vbo, &f, sizeof(faceVertex_s), 1)) {
 		return;
 	}
 
-	int gsUpdateTransformation();
-	void GPU_DrawArrayDirectly(GPU_Primitive_t primitive, u8* data, u32 n);
-
-	gsUpdateTransformation();
-	GPU_DrawArrayDirectly(GPU_TRIANGLES, (u8*)p, 6);
+	ctrUpdateTransformation();
+	ctrDrawArrayDirectly(GPU_TRIANGLES, (u8*)p, 6);
 
 #endif
 }
 
 void draw_mdl_frame(q1MdlFrame *frame);
-int gsUpdateTransformation();
 
 void ViewState::render_mdl(entity_t *ent) {
 	if (ent == 0 || ent->model == 0) {
@@ -882,20 +878,20 @@ void ViewState::render_mdl(entity_t *ent) {
 		}
 	}
 
-	gsTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
-	gsRotateZ((360.0f-ent->angles[1]) * M_PI / 180.0f);
-	gsRotateY(-ent->angles[0] * M_PI / 180.0f);
-	gsRotateX(ent->angles[2] * M_PI / 180.0f);
+	ctrTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
+	ctrRotateZ((ent->angles[1]) * M_PI / 180.0f);
+	ctrRotateY(-ent->angles[0] * M_PI / 180.0f);
+	ctrRotateX(ent->angles[2] * M_PI / 180.0f);
 
 	vec3_t scale, scale_origin;
 	mdl->scale_origin().copy_to(scale_origin);
 	mdl->scale().copy_to(scale);
-	gsTranslate(scale_origin[0],scale_origin[1],scale_origin[2]);
-	gsScale(scale[0],scale[1],scale[2]);
+	ctrTranslate(scale_origin[0],scale_origin[1],scale_origin[2]);
+	ctrScale(scale[0],scale[1],scale[2]);
 	sys.bind_texture(mdl->get_skin(ent->skinnum));
-	gsUpdateTransformation();
+	ctrUpdateTransformation();
 	draw_mdl_frame(frame);
-	//gsVboDraw(&frame->m_vbo);
+
 #ifdef WIN32
 	glTranslatef(ent->origin[0], ent->origin[1], ent->origin[2]);
 	glRotatef(ent->angles[1], 0, 0, 1);
@@ -941,22 +937,17 @@ void ViewState::render_bsp(entity_t *ent) {
 	glRotatef(ent->angles[0], 0, 1, 0);
 	glRotatef(ent->angles[2], 1, 0, 0);
 #endif
-	//texturing stuff
 
-	//sys.renderMode.set_mode(bsp_mode);
-
-	gsTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
-	gsRotateZ(ent->angles[1] * M_PI / 180.0f);
-	gsRotateY(ent->angles[0] * M_PI / 180.0f);
-	gsRotateX(ent->angles[2] * M_PI / 180.0f);
+	ctrTranslate(ent->origin[0], ent->origin[1], ent->origin[2]);
+	ctrRotateZ(ent->angles[1] * M_PI / 180.0f);
+	ctrRotateY(ent->angles[0] * M_PI / 180.0f);
+	ctrRotateX(ent->angles[2] * M_PI / 180.0f);
 
 	q1_face *face = bsp->get_face_list();
 	int num_faces = bsp->get_face_count();
 	for (int i = 0; i < num_faces; i++, face++) {
 		render_face(face,ent->frame);
 	}
-
-	//sys.renderMode.set_mode(shader_mode);
 
 	//update lightmap textures
 	load_dirty_lightmaps(bsp);
@@ -1141,16 +1132,15 @@ void ViewState::render_particles() {
 
 	Particle *kill;
 	float cl_time = (float)host.cl_time();
-	float frame_time = (float)host.frame_time();
-	float time3 = frame_time * 15;
-	float time2 = frame_time * 10; // 15;
-	float time1 = frame_time * 5;
-	float grav = (float)frame_time * sv_gravity.value * 0.05f;
-	float dvel = 4 * frame_time;
+	int count = 0;
 
+	u8* buf = m_particles.m_vbo_particles.data;
+	u8* idx = m_particles.m_vbo_index.data;
+	vbo_particle_t *part = (vbo_particle_t *)buf;
 
-	for (;;)
-	{
+	//::printf("particles %p ", buf); fflush(stdout);
+
+	for (;;) {
 		kill = m_particles.m_active_particles;
 		if (kill && kill->die < cl_time)
 		{
@@ -1162,9 +1152,15 @@ void ViewState::render_particles() {
 		break;
 	}
 
-#ifdef WIN32
-	glBindTexture(GL_TEXTURE_2D, m_particles.m_texture_id);
-	glBegin(GL_TRIANGLES);
+	//::printf("killed "); fflush(stdout);
+
+	float frame_time = (float)host.frame_time();
+	float time3 = frame_time * 15;
+	float time2 = frame_time * 10; // 15;
+	float time1 = frame_time * 5;
+	float grav = (float)frame_time * sv_gravity.value * 0.05f;
+	float dvel = 4 * frame_time;
+
 	for (Particle *p = m_particles.m_active_particles; p; p = p->next) {
 		for (;;) {
 			kill = p->next;
@@ -1178,26 +1174,33 @@ void ViewState::render_particles() {
 			break;
 		}
 
-		int scale = 1;
-
-		vec3_t v;
 		extern unsigned char *q1_palette;
-		byte *c = &q1_palette[p->color * 3];
+		int color = p->color & 0xff;
+		byte *c = &q1_palette[color * 3];
 
-		glColor3ubv(c);
+		p->org.copy_to(part->pos);
+		part->color[0] = c[0];
+		part->color[1] = c[1];
+		part->color[2] = c[2];
 
-		p->org.copy_to(v);
-		glTexCoord2f(0, 0);
-		glVertex3f(v[0], v[1], v[2]);
 
-		(p->org + m_up).copy_to(v);
-		glTexCoord2f(1, 0);
-		glVertex3f(v[0], v[1], v[2]);
+		switch (p->type) {
+		case pt_fire:
+		case pt_explode:
+		case pt_explode2:
+			part->color[3] = 10.0f - p->ramp;
+			break;
+		default:
+			part->color[3] = 10.0f;
+		}
+		part++;
+		count++;
 
-		(p->org + m_right).copy_to(v);
-		glTexCoord2f(0, 1);
-		glVertex3f(v[0], v[1], v[2]);
-
+		//if (ctrVboAddData(&m_vbo, &part, sizeof(part_t), 1) == 0) {
+		//	count++;
+		//} else {
+		//	::printf("particle buffer full\n"); fflush(stdout);
+		//}
 		p->org += p->vel * frame_time;
 
 		switch (p->type) {
@@ -1246,10 +1249,51 @@ void ViewState::render_particles() {
 		case pt_slowgrav:
 			p->vel[2] -= grav;
 			break;
+		default:
+			break;
 		}
-
 	}
-	glEnd();
-	glColor3f(1, 1, 1);
-#endif
+	//::printf("%d ", count); fflush(stdout);
+
+	if (count) {
+
+		m_particles.bind_texture();
+
+		//printf("particles: %d\n", count);
+		/*u16* idx = (u16*)ctrVboGetOffset(&m_vbo);
+		u16 v;
+		int countidx = 0;
+		for (int i = 0; i < count; i++) {
+			v = i;
+			if (ctrVboAddData(&m_vbo, &v, sizeof(u16), 1) == 0) {
+				countidx++;
+			} else {
+				::printf("particle buffer full\n"); fflush(stdout);
+			}
+		}*/
+
+		//if (count != countidx) {
+		//	::printf("count != countidx\n"); fflush(stdout);
+		//}
+
+		sys.renderMode.set_mode(particle_mode);
+		shaderProgram_s* shader = ctrCurrentShader();
+
+
+		C3D_BufInfo* bufInfo = C3D_GetBufInfo();
+		BufInfo_Init(bufInfo);
+		BufInfo_Add(bufInfo, buf, sizeof(vbo_particle_t), 2, 0x10);
+
+		if (buf && shader) {
+			s8 uLoc_gsh_vUp = shaderInstanceGetUniformLocation(shader->geometryShader, "vUp");
+			s8 uLoc_gsh_vRight = shaderInstanceGetUniformLocation(shader->geometryShader, "vRight");
+
+			ctrUpdateTransformation();
+
+			C3D_FVUnifSet(GPU_GEOMETRY_SHADER, uLoc_gsh_vUp, 8.0f, 0.0f, 0.0f, 0.0);
+			C3D_FVUnifSet(GPU_GEOMETRY_SHADER, uLoc_gsh_vRight, 0.0f, 8.0f, 0.0f, 0.0);
+			C3D_DrawElements(GPU_GEOMETRY_PRIM, count, C3D_UNSIGNED_SHORT, idx);
+		}
+	}
+	//::printf(" done\n"); fflush(stdout);
 }

@@ -1,6 +1,7 @@
 #include "sys.h"
 #include <3ds.h>
-#include "gs.h"
+#include <citro3d.h>
+#include "ctr_render.h"
 
 #include "keyboard.h"
 #include "input.h"
@@ -106,14 +107,9 @@ void SYS::push_2d() {
 	glPushMatrix();
 	glLoadIdentity();
 #endif
-	gsMatrixMode(GS_PROJECTION);
-	gsPushMatrix();
-	gsOrthoMatrix(400.0f, 240.0f, -1.0f, 1.0f);
-	
-	gsMatrixMode(GS_MODELVIEW);
-	gsPushMatrix();
-	gsLoadIdentity();
-	GPU_SetDepthTestAndWriteMask(true, GPU_ALWAYS, GPU_WRITE_ALL);
+#ifdef CITRO3D
+	ctrPush2d();
+#endif
 }
 
 void SYS::pop_2d() {
@@ -124,12 +120,9 @@ void SYS::pop_2d() {
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 #endif
-	gsMatrixMode(GS_MODELVIEW);
-	gsPopMatrix();
-	gsMatrixMode(GS_PROJECTION);
-	gsPopMatrix();
-	gsMatrixMode(GS_MODELVIEW);
-	GPU_SetDepthTestAndWriteMask(true, GPU_GREATER, GPU_WRITE_ALL);
+#ifdef CITRO3D
+	ctrPop2d();
+#endif
 }
 
 //#define DS_SCREEN_FULLSCREEN

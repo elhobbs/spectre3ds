@@ -26,8 +26,6 @@ private:
 inline Notify::Notify() {
 	m_TTL = 0;
 	*m_text = 0;
-	//gsVboInit(&m_vbo);
-	//gsVboCreate(&m_vbo, 128*1024);
 }
 
 inline void Notify::clear() {

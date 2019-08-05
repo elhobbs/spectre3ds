@@ -4,6 +4,7 @@
 #include "procTexture.h"
 #include "cache.h"
 #include "MaxRectsBinPack.h"
+#include "ctr_render.h"
 
 extern cache textureCache;
 extern cache vboCache;
@@ -47,7 +48,7 @@ void q1_texture::bind() {
 
 
 	tex->data = data;
-	tex->type = GPU_RGBA5551;
+	tex->fmt = GPU_RGBA5551;
 	_pal256toRGBA(tex, m_data, q1_palette, 0);
 	sys.bind_texture(m_id);
 }
@@ -55,17 +56,6 @@ void q1_texture::bind() {
 void build_face(q1_face *face);
 
 void q1_face::bind() {
-	/*if (m_cache) {
-		vboCache.touch(m_cache);
-		return;
-	}
-	gsVboInit(&vbo);
-	int cb = sizeof(faceVertex_s)*m_num_points;
-	m_cache = vboCache.alloc(&m_cache, cb + 15);
-	byte *data = (byte *)((((u32)m_cache) + 15) & (~15));
-	vbo.data = data;
-	vbo.maxSize = cb;
-	build_face(this);*/
 }
 
 
@@ -106,25 +96,31 @@ extern u32* __ctru_linear_heap;
 extern shaderProgram_s q1Bsp_shader;
 
 void q1Bsp::set_render_mode() {
-	//texturing stuff
-	u32 bufferOffsets = 0;
-	u64 bufferPermutations = 0x210;
-	u8 bufferNumAttributes = 3;
+#ifdef CITRO3D
+	ctrBindShader(&q1Bsp_shader);
+	//printf("q1Bsp_shader\n");
 
-	gsShaderSet(&q1Bsp_shader);
+	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
+	AttrInfo_Init(attrInfo);
+	AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 3); // v0=position
+	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 2); // v1=texcoord
+	AttrInfo_AddLoader(attrInfo, 2, GPU_FLOAT, 2); // v1=texcoord
 
-	GPU_SetAttributeBuffers(3, (u32*)osConvertVirtToPhys((void *)__ctru_linear_heap),
-		GPU_ATTRIBFMT(0, 3, GPU_FLOAT) | GPU_ATTRIBFMT(1, 2, GPU_FLOAT) | GPU_ATTRIBFMT(2, 2, GPU_FLOAT),
-		0xFFC, 0x210, 1, &bufferOffsets, &bufferPermutations, &bufferNumAttributes);
+	C3D_BufInfo* bufInfo = C3D_GetBufInfo();
+	BufInfo_Init(bufInfo);
+	BufInfo_Add(bufInfo, __ctru_linear_heap, sizeof(float) * 7, 3, 0x210);
+
+	C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvInit(env);
 	
-	GPU_SetTextureEnable((GPU_TEXUNIT)(GPU_TEXUNIT0 | GPU_TEXUNIT1));
-	GPU_SetTexEnv(0,
-		GPU_TEVSOURCES(GPU_TEXTURE0, GPU_TEXTURE1, GPU_PRIMARY_COLOR),
-		GPU_TEVSOURCES(GPU_TEXTURE0, GPU_PRIMARY_COLOR, GPU_PRIMARY_COLOR),
-		GPU_TEVOPERANDS(0, 2, 0),
-		GPU_TEVOPERANDS(0, 0, 0),
-		GPU_MODULATE, GPU_MODULATE,
-		0xFFFFFFFF);
+	C3D_TexEnvSrc(env, C3D_RGB, GPU_TEXTURE0, GPU_TEXTURE1, GPU_PRIMARY_COLOR);
+	C3D_TexEnvSrc(env, C3D_Alpha, GPU_TEXTURE0, GPU_PRIMARY_COLOR, GPU_PRIMARY_COLOR);
+	
+	C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_ALPHA, GPU_TEVOP_RGB_SRC_COLOR);
+	C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA);
+	
+	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+#endif
 }
 
 unsigned char *q1Bsp::decompress_vis(unsigned char *in)
@@ -1230,7 +1226,7 @@ void q1_face::build_vertex_array() {
 		//then use this when building the lightmaps
 		fv->lightmap[0] = x;
 		fv->lightmap[1] = y;
-#ifndef GS_NO_NORMALS
+#ifdef MDL_NORMALS
 		m_plane->m_normal.copy_to(&fv->normal.x);
 #endif
 	}
@@ -1426,7 +1422,7 @@ int q1Bsp::load_faces() {
 
 		//gsVboInit(&m_faces[i].m_vbo);
 		//build_face(&m_faces[i]);
-		vbo_cb += sizeof(faceVertex_s) * num_edges;
+		//vbo_cb += sizeof(faceVertex_s) * num_edges;
 
 		m_faces[i].build_vertex_array();
 	}

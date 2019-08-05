@@ -253,7 +253,7 @@ void Mixer::print() {
 }
 
 void Mixer::update() {
-	u64 last = m_sound_time;
+	//u64 last = m_sound_time;
 	m_sound_time = sample_pos();
 	//printf("%10lld %10lld\n",m_sound_time, m_paint_time);
 

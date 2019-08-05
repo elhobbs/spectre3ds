@@ -10,6 +10,8 @@
 #include <string.h>
 #include "ed_parser.h"
 
+void pause_key(char* text);
+
 unsigned char *q1_palette;
 extern cache textureCache;
 extern cache vboCache;
@@ -103,7 +105,7 @@ void Host::execute_cmds() {
 
 void Host::dprintf(char* format, ...) {
 	va_list args;
-	static char buffer[4096], *p;
+	static char buffer[4096];
 
 	if (Cvar_VariableValue("debug") == 0) {
 		return;
@@ -119,7 +121,7 @@ void Host::dprintf(char* format, ...) {
 
 void Host::printf(char* format, ...) {
 	va_list args;
-	static char buffer[4096], *p;
+	static char buffer[4096];
 
 	va_start(args, format);
 	vsprintf(buffer, format, args);
@@ -134,7 +136,7 @@ void Host::printf(char* format, ...) {
 
 void Host::center_printf(char* format, ...) {
 	va_list args;
-	static char buffer[4096], *p;
+	static char buffer[4096];
 
 	va_start(args, format);
 	vsprintf(buffer, format, args);
@@ -153,7 +155,9 @@ void Host::center_printf(char* format, ...) {
 #define TIMING_PRINT() g_timer.print()
 #else
 #define TIMING_RESET()
-#define TIMING_START(_t,_name)
+#define TIMING_START(_t,_name) 
+//pause_key(_name)
+//::printf("%s\n", _name)
 #define TIMING_STOP(_t)
 #define TIMING_PRINT()
 #endif
@@ -229,10 +233,8 @@ void Host::frame(double time) {
 	TIMING_PRINT();
 }
 
-#define CONFIG_3D_SLIDERSTATE (*(float*)0x1FF81080)
-
 void Host::render() {
-	float slider = CONFIG_3D_SLIDERSTATE;
+	float slider = osGet3DSliderState();
 	int frames = slider > 0.0f ? 2 : 1;
 	frmType_t type[] = { FRAME_LEFT, FRAME_RIGHT };
 
@@ -250,7 +252,9 @@ void Host::render() {
 	TIMING_STOP(t1);
 
 	for (int i = 0; i < frames; i++) {
+		TIMING_START(t1, "fbegin");
 		sys.frame_begin(type[i]);
+		TIMING_STOP(t1);
 
 		TIMING_START(t1, "frend");
 		m_cl.render(type[i]);
@@ -346,18 +350,18 @@ extern "C" size_t getMemFree();
 
 void pause_key(char *text) {
 #if 0
-	printf("debug : %dKB LINEAR, %dKB REGULAR", (int)linearSpaceFree() / 1024, (int)getMemFree() / 1024);
+	//printf("debug : %dKB LINEAR, %dKB REGULAR\n", (int)linearSpaceFree() / 1024, (int)getMemFree() / 1024);
 	printf(text);
-	printf("press A...");
+	printf("\npress A...\n");
 	do {
 		scanKeys();
-		gspWaitForEvent(GSPEVENT_VBlank0, false);
+		gspWaitForEvent(GSPGPU_EVENT_VBlank0, false);
 	} while ((keysDown() & KEY_A) == 0);
 	do {
 		scanKeys();
-		gspWaitForEvent(GSPEVENT_VBlank0, false);
+		gspWaitForEvent(GSPGPU_EVENT_VBlank0, false);
 	} while ((keysDown() & KEY_A) == KEY_A);
-	printf("done\n");
+	printf("done\n\n");
 #endif
 }
 
@@ -399,7 +403,7 @@ void Host::choose_game_draw(char *dirlist[], int total, int pos)
 void Host::choose_game_dir() {
 	char *buf;
 	char *dirlist[DIR_LIST_COUNT * 3];
-	int start, dircount = 0;
+	int dircount = 0;
 	int pos = 0;
 	int len, pressed, ret;
 
@@ -407,7 +411,6 @@ void Host::choose_game_dir() {
 	buf = new char[4096];
 	{
 		struct stat st;
-		char filename[256];
 		DIR *dir;
 		struct dirent *pent;
 
@@ -442,7 +445,7 @@ void Host::choose_game_dir() {
 		closedir(dir);
 	}
 
-	start = pressed = pos = 0;
+	pressed = pos = 0;
 
 	choose_game_draw(dirlist, dircount, pos);
 
@@ -733,6 +736,10 @@ int Console::handleEvent(event_t ev) {
 	}
 
 	switch (ev.type) {
+	case EV_MOUSE_MOVE:
+	case EV_MOUSE_BUTTON:
+	case EV_NONE:
+		break;
 	case EV_KEY_DOWN:
 		key = MapKey(ev.value, m_shift);
 		switch (key) {
@@ -862,7 +869,6 @@ void Console::print(char *buffer) {
 	if (m_text_pos + len + 64 > MAX_CONSOLE_TEXT) {
 		m_text_pos = 0;
 	}
-	int pos = 0;
 	int line_len = 0;
 	char *p;
 	int color = 0;
@@ -930,7 +936,7 @@ void Console::print(char *buffer) {
 
 }
 
-extern gsVbo_s con_tris;
+extern ctrVbo_t con_tris;
 
 void Console::render() {
 	sys.push_2d();

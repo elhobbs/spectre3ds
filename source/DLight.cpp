@@ -98,8 +98,8 @@ void DLights::light_face(q1_face *face, unsigned int *bl) {
 	int text = (face->m_extents[1] >> 4) + 1;
 	int smin = face->m_texturemins[0];
 	int tmin = face->m_texturemins[1];
-	int dynamic_num = 0;
-	int dynamic[64][4];
+	//int dynamic_num = 0;
+	//int dynamic[64][4];
 	q1_plane &plane = *(face->m_plane);
 	DLight *dl = m_list;
 	for (int i = 0; i < MAX_DLIGHTS; i++, dl++) {
@@ -169,8 +169,8 @@ void DLights::light_face(q1_face *face, int *color) {
 	tex3_fixed16 &v_vec = face->m_texinfo->m_vecs[1];
 	fixed32p16 u_ofs(face->m_texinfo->m_ofs[0]);
 	fixed32p16 v_ofs(face->m_texinfo->m_ofs[1]);
-	int sext = (face->m_extents[0] >> 4) + 1;
-	int text = (face->m_extents[1] >> 4) + 1;
+	//int sext = (face->m_extents[0] >> 4) + 1;
+	//int text = (face->m_extents[1] >> 4) + 1;
 	int smin = face->m_texturemins[0];
 	int tmin = face->m_texturemins[1];
 	int dynamic_num = 0;
