@@ -329,14 +329,14 @@ int SYS::frame_begin(frmType_t type) {
 	float iod = slider / 4;
 
 	sys_in_frame = true;
-	LOG("C3D_FrameSync");
-	C3D_FrameSync();
-	LOG("C3D_FrameBegin");
-	C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
 
 #ifdef CITRO3D
 	switch (type) {
 	case FRAME_LEFT:
+		LOG("C3D_FrameBegin");
+		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+
 		LOG("C3D_RenderTargetClear - left");
 		C3D_RenderTargetClear(target_left, C3D_CLEAR_ALL, CLEAR_COLOR, 0);
 		C3D_FrameDrawOn(target_left);
@@ -378,13 +378,13 @@ int SYS::frame_end(frmType_t type) {
 		ctrVboDrawDirectly(&con_tris);
 	}
 	pop_2d();
-	C3D_FrameEnd(0);
 #endif
 
 	return 0;
 }
 
 int SYS::frame_final() {
+	C3D_FrameEnd(0);
 	keyboard_draw();
 	sys_in_frame = false;
 	return 0;
